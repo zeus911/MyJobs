@@ -329,10 +329,13 @@ def full_save_object(copy_to, obj, queue):
 
     """
     key = object_to_key(obj)
-
-    queue[key]['new_object'] = get_or_create_object(copy_to, obj, queue,
-                                                    include_null=True)
-    queue[key]['status'] = COMPLETE
+    try:
+        queue[key]['new_object'] = get_or_create_object(copy_to, obj, queue,
+                                                        include_null=True)
+        queue[key]['status'] = COMPLETE
+    except Exception, e:
+        queue[key]['status'] = ERROR
+        queue[key]['error'] = e
 
     return queue
 
@@ -405,8 +408,13 @@ def save_object(copy_to, obj, queue):
     """
     key = object_to_key(obj)
 
-    queue[key]['new_object'] = get_or_create_object(copy_to, obj, queue)
-    queue[key]['status'] = SAVED
+    try:
+        queue[key]['new_object'] = get_or_create_object(copy_to, obj, queue)
+        queue[key]['status'] = SAVED
+    except Exception, e:
+        queue[key]['status'] = ERROR
+        queue[key]['error'] = e
+        return queue
 
     # If there aren't additional foreign keys or many-to-manys that need
     # added we can mark the object as completed now.
