@@ -302,7 +302,7 @@ class MoreButtonBlock(Block):
         }
 
     def required_js(self):
-        return ['%spager.163-24.js' % settings.STATIC_URL]
+        return ['%spager.164-21.js' % settings.STATIC_URL]
 
 
 class RegistrationBlock(Block):

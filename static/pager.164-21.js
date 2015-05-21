@@ -159,7 +159,7 @@ Pager.prototype = {
             url,
             data,
             function(html) {
-                alsoThis._getItemsSuccessHandler(html, parent);
+                alsoThis._getItemsSuccessHandler(url ? html : "", parent);
             }
         );
     },
@@ -216,6 +216,7 @@ Pager.prototype = {
 };
 
 $(document).ready(function(){
+  $(".more_less_links_container").css("margin-left", "25px");
 	var pager = new Pager();
     var total_clicks = parseInt(window.location.hash.slice(1, 10));
     if (!isNaN(total_clicks)) {

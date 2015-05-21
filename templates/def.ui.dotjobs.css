@@ -1132,7 +1132,7 @@ a#sponsor-dotjobs:hover{
 .direct_dotjobsFilterContainer a:hover{
     color: #900;
 }
-.direct_dotjobsFilterContainer a.direct_optionsMore{
+.direct_dotjobsFilterContainer .more_less_links_container {
     margin-left: 25px;
 }
 .ui-autocomplete .ui-state-hover,
