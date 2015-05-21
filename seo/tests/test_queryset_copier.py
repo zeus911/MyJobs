@@ -22,6 +22,8 @@ class QuerysetCopier(DirectSEOBase):
         # Many-to-manys
         tag = models.SiteTag.objects.create(site_tag='Copy Test')
         self.seosite.site_tags.add(tag)
+        tag = models.SiteTag.objects.create(site_tag='Copy Test 2')
+        self.seosite.site_tags.add(tag)
         buid = factories.BusinessUnitFactory(pk=123321)
         self.seosite.business_units.add(buid)
         company = factories.CompanyFactory()
@@ -51,13 +53,25 @@ class QuerysetCopier(DirectSEOBase):
         for field in null_foreign_key_field_names:
             fk_obj = getattr(obj, field)
             new_fk_obj = getattr(new_obj, field)
-            self.assertEqual(fk_obj.pk, new_fk_obj.pk)
+            if fk_obj:
+                self.assertEqual(fk_obj.pk, new_fk_obj.pk)
+            else:
+                self.assertIsNone(fk_obj)
+                self.assertIsNone(new_fk_obj)
 
-        for field in many_to_many_field_names:
-            m2m_objs = getattr(obj, field).values_list('pk', flat=True)
-            new_m2m_objs = getattr(new_obj, field).values_list('pk', flat=True)
+        for fieldname in many_to_many_field_names:
+            field = obj.__class__._meta.get_field_by_name(fieldname)[0]
+            m2m_objs = qc.get_many_to_many_objects_for_field(obj, field)
+            m2m_objs = m2m_objs.values_list('pk', flat=True)
 
-            self.assertItemsEqual(m2m_objs, new_m2m_objs)
+            new_m2m_objs = qc.get_many_to_many_objects_for_field(new_obj, field)
+            new_m2m_objs = new_m2m_objs.values_list('pk', flat=True)
+
+            self.assertItemsEqual(m2m_objs, new_m2m_objs,
+                                  msg="M2M not equal for field %s. "
+                                      "Old object had %s, new object had "
+                                      "%s."
+                                      % (fieldname, m2m_objs, new_m2m_objs))
 
     def test_copy_new_object(self):
         """

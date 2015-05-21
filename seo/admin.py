@@ -1246,7 +1246,7 @@ def check_inline_instance(obj, req):
         return obj.inline_instances
 
 
-import queryset_copier
+from queryset_copier import copy_following_relationships
 
 
 def copy_to_qc(modeladmin, request, queryset):
@@ -1256,8 +1256,28 @@ def copy_to_qc(modeladmin, request, queryset):
         modeladmin.message_user(request, error_message)
         return
 
+    queue = copy_following_relationships(queryset, copy_to='qc-redirect')
 
-    modeladmin.message_user(request, 'stuff was done')
+    modeladmin.message_user(request, 'Below is a summary of the items copied. '
+                                     'Any errors encountered during the '
+                                     'process are included.')
+
+    for queue_entry in queue.values():
+        obj = queue_entry['object']
+        related_objects = (queue_entry['foreign_keys'] +
+                           queue_entry['many_to_manys'] +
+                           queue_entry['null_foreign_keys'])
+        related_objects = [str(related_obj) for related_obj in related_objects]
+        errors = queue_entry['error']
+
+        entry_msg = ("Object: {object}</br>"
+                     "Additional objects copied because of this object: "
+                     "{related_objects}</br>"
+                     "Errors copying the object: {errors}")
+        entry_msg = entry_msg.format(object=obj,
+                                     related_objects=related_objects,
+                                     errors=errors)
+        modeladmin.message_user(request, mark_safe(entry_msg))
 
 
 admin.site.add_action(copy_to_qc, 'Copy to QC')

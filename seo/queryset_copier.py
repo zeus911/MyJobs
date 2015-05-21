@@ -1,7 +1,9 @@
 from collections import OrderedDict
+import re
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
+from django.db import models, IntegrityError
+
 
 ERROR = -1
 NOT_STARTED = 0
@@ -56,12 +58,15 @@ def build_object_kwargs(obj, queue, include_null=False):
             # be handled until after the object is fully created.
             continue
 
-        if isinstance(field, models.ForeignKey) and field.null == include_null:
+        elif isinstance(field, models.ForeignKey):
+            # If we're not including nullable foreign keys and we've
+            # come to a nullable foreign key ignore the field.
+            if not include_null and (field.null or field.blank):
+                continue
+
             fk_object = get_foreign_key_object_for_field(obj, field)
             if fk_object:
-                fk_queue_key = object_to_key(fk_object)
-                fk_queue_entry = queue[fk_queue_key]
-                new_fk_object = fk_queue_entry['new_object']
+                new_fk_object = get_new_object(fk_object, queue)
                 if not new_fk_object:
                     # This point should never be reached. All associated
                     # foreign key objects should be made before
@@ -70,7 +75,7 @@ def build_object_kwargs(obj, queue, include_null=False):
                     raise ObjectDoesNotExist('The foreign key %s was not '
                                              'already created when attempting '
                                              'to create object %s.'
-                                             % fk_object, obj)
+                                             % (fk_object, obj))
                 kwargs[field.name] = new_fk_object
         elif not isinstance(field, models.ForeignKey):
             kwargs[field.attname] = getattr(obj, field.attname)
@@ -150,7 +155,7 @@ def create_in_order(copy_to, queue):
     return queue
 
 
-def create_new_object(copy_to, model, **kwargs):
+def create_new_object(copy_to, base_model, **kwargs):
     """
     Saves a new object to the specified database.
 
@@ -161,9 +166,44 @@ def create_new_object(copy_to, model, **kwargs):
     :return: The new object
 
     """
-    new_obj = model(**kwargs)
-    new_obj.save(using=copy_to)
-    return new_obj
+    try:
+        return base_model.objects.using(copy_to).create(**kwargs)
+    except IntegrityError, e:
+        duplicate = find_duplicate_object(copy_to, base_model, e, **kwargs)
+        return update_existing_object(copy_to, duplicate, **kwargs)
+
+
+def find_duplicate_object(database, base_model, integrity_error, **kwargs):
+    """
+    Given an integrity error, attempts to find the claimed duplicate.
+
+    :param database: The database that has the duplicate.
+    :param base_model: The model for the duplicate.
+    :param integrity_error: The received IntegrityError.
+
+    :return: The duplicate if found. Otherwise it raises another
+             IntegrityError.
+
+    """
+    pattern = "Duplicate entry '(?P<value>.*)' for key '(?P<key>.*)'"
+    pattern = re.compile(pattern)
+
+    try:
+        value, key = pattern.findall(integrity_error.args[1])[0]
+        value = kwargs.get(key)
+        obj = base_model.objects.using(database).get(**{key: value})
+        return obj
+    except base_model.DoesNotExist, e:
+        print key, value, integrity_error, e
+        raise ObjectDoesNotExist(e)
+    except base_model.MultipleObjectsReturned, e:
+        print key, value, integrity_error, e
+        raise ObjectDoesNotExist(e)
+    except IndexError, e:
+        raise IntegrityError('A duplicate entry for an object of type %s '
+                             ' was found. The copier was unable to '
+                             'de-duplicate the object.' % base_model)
+
 
 
 def get_foreign_keys(obj, null=False):
@@ -181,7 +221,8 @@ def get_foreign_keys(obj, null=False):
     fields = obj._meta.local_fields
 
     return [field for field in fields
-            if isinstance(field, models.ForeignKey) and field.null == null]
+            if isinstance(field, models.ForeignKey) and (field.null == null or
+                                                         field.blank == null)]
 
 
 def get_foreign_key_objects(obj, null=False):
@@ -201,7 +242,7 @@ def get_foreign_key_objects(obj, null=False):
     for fk_field in get_foreign_keys(obj, null=null):
         objects.append(get_foreign_key_object_for_field(obj, fk_field))
 
-    return objects
+    return [obj for obj in objects if obj]
 
 
 def get_foreign_key_object_for_field(obj, field):
@@ -242,15 +283,14 @@ def get_many_to_many_objects(obj):
     objects = []
     for m2m_field in get_many_to_many(obj):
         m2m_field = getattr(obj, m2m_field.attname)
-        if hasattr(m2m_field, 'through'):
+        if hasattr(m2m_field, 'add'):
+            objects += list(m2m_field.all())
+        else:
             # The field is related through an explicitly defined
             # through table, so we have to create the through
             # object in addition to the related object.
             query = {m2m_field.source_field_name: obj}
             objects += list(m2m_field.through.objects.filter(**query))
-
-        else:
-            objects += list(m2m_field.all())
     return objects
 
 
@@ -266,15 +306,28 @@ def get_many_to_many_objects_for_field(obj, field):
 
     """
     field = getattr(obj, field.attname)
-    if hasattr(field, 'through'):
+    if hasattr(field, 'add'):
+        return field.all()
+    else:
         # The field is related through an explicitly defined
         # through table, so we have to create the through
         # object in addition to the related object.
         query = {field.source_field_name: obj}
         return field.through.objects.filter(**query)
 
-    else:
-        return field.all()
+
+def get_new_object(obj, queue):
+    """
+    Gets the new/copied object from the queue for a given object.
+
+    :param obj:  The object you want the copied object for.
+
+    :return: The copied object.
+
+    """
+    key = object_to_key(obj)
+    queue_entry = queue[key]
+    return queue_entry['new_object']
 
 
 def get_or_create_object(copy_to, obj, queue, include_null=False):
@@ -294,7 +347,6 @@ def get_or_create_object(copy_to, obj, queue, include_null=False):
     """
 
     kwargs = build_object_kwargs(obj, queue, include_null=include_null)
-
     model = obj.__class__
     try:
         new_obj = model.objects.using(copy_to).get(pk=obj.pk)
@@ -326,6 +378,23 @@ def full_save_object(copy_to, obj, queue):
     try:
         queue[key]['new_object'] = get_or_create_object(copy_to, obj, queue,
                                                         include_null=True)
+        new_obj = queue[key]['new_object']
+
+        # Finally ensure that appropriate many-to-many relationships
+        # exist now that we know the object is otherwise completely created.
+        for field in get_many_to_many(obj):
+            m2m_objects = get_many_to_many_objects_for_field(obj, field)
+            if hasattr(getattr(obj, field.name), 'add'):
+                for m2m_object in m2m_objects:
+                    new_m2m_object = get_new_object(m2m_object, queue)
+                    if new_m2m_object:
+                        relation_manager = getattr(new_obj, field.name)
+                        relation_manager.add(new_m2m_object)
+
+        # Resave with the new m2m relationships intact.
+        queue[key]['new_object'] = get_or_create_object(copy_to, obj, queue,
+                                                        include_null=True)
+
         queue[key]['status'] = COMPLETE
     except Exception, e:
         queue[key]['status'] = ERROR
@@ -421,6 +490,7 @@ def save_object(copy_to, obj, queue):
 def update_existing_object(copy_to, obj, **kwargs):
     """
     Overwrites an existing object on a specified database with data.
+    Doesn't use update to ensure any related signals are triggered.
 
     :param copy_to: The database the object should be saved to.
     :param obj: The existing object from the copy_to database.
@@ -432,6 +502,12 @@ def update_existing_object(copy_to, obj, **kwargs):
     for key, value in kwargs.items():
         setattr(obj, key, value)
 
-    obj.save(using=copy_to)
+    try:
+        obj.save(using=copy_to)
+    except IntegrityError, e:
+        duplicate = find_duplicate_object(copy_to, obj.__class__, e, **kwargs)
+        kwargs['pk'] = duplicate.pk
+        kwargs['id'] = duplicate.id
+        return update_existing_object(copy_to, duplicate, **kwargs)
 
     return obj
