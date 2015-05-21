@@ -133,6 +133,9 @@ CELERY_QUEUES = {
     },
     'sendgrid': {
         'binding_key': 'sendgrid.#'
+    },
+    'myemails': {
+        'binding_key': 'myemails.#'
     }
 }
 CELERY_ROUTES = {
@@ -184,6 +187,10 @@ CELERY_ROUTES = {
     'tasks.submit_all_sitemaps': {
         'queue': 'myjobs',
         'routing_key': 'dseo.submit_all_sitemaps'
+    },
+    'tasks.send_event_email': {
+        'queue': 'myemails',
+        'routing_key': 'myemails.send_event_emails'
     },
     'tasks.process_sendgrid_event': {
         'queue': 'sendgrid',

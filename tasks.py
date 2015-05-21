@@ -12,7 +12,7 @@ from urllib2 import HTTPError, URLError
 import urlparse
 import uuid
 
-from celery import group
+from celery import group, current_task
 from celery.task import task
 
 from django.conf import settings
@@ -861,6 +861,7 @@ def event_list_to_email_log(event_list):
 
     return events_to_create
 
+
 @task(name="tasks.process_sendgrid_event", ignore_result=True)
 def process_sendgrid_event(events):
     """
@@ -874,3 +875,16 @@ def process_sendgrid_event(events):
     event_list = get_event_list(events)
     events_to_create = event_list_to_email_log(event_list)
     EmailLog.objects.bulk_create(events_to_create)
+
+
+@task(name="tasks.send_event_email", ignore_result=True)
+def send_event_email(email_task):
+    """
+    Send an appropriate email given an EmailTask instance.
+
+    :param email_task: EmailTask we are using to generate this email
+    """
+    email_task.task_id = current_task.task_id
+    email_task.save()
+
+    email_task.send_email()

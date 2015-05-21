@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from celery.result import AsyncResult
 
 from django.contrib.auth.models import ContentType
 from django.contrib.contenttypes.generic import GenericForeignKey
@@ -78,10 +79,17 @@ class Event(models.Model):
         Sends an email for a for_object.
 
         :param for_object: The object an email is being sent for.
-
         """
-        email_content = self.email_template.render(for_object)
-        # TODO: Write actual send email logic
+        body = self.email_template.render(for_object)
+
+
+CRON_EVENT_MODELS = ['purchasedjob', 'purchasedproduct']
+TIME_EVENT_MODELS = ['purchasedjob', 'purchasedproduct', 'request']
+# ALL_EVENT_MODELS currently equals TIME_EVENT_MODELS after this operation,
+# but that will not always be the case.
+ALL_EVENT_MODELS = set(CRON_EVENT_MODELS + TIME_EVENT_MODELS)
+
+# TODO: Set up signals using these
 
 
 class CronEvent(Event):
@@ -161,6 +169,17 @@ class EmailTask(models.Model):
     scheduled_for = models.DateTimeField()
     scheduled_at = models.DateTimeField(auto_now_add=True)
 
+    task_id = models.CharField(max_length=36, blank=True, default='',
+                               help_text='guid with dashes')
+
     @property
     def completed(self):
         return bool(self.completed_on)
+
+    def schedule(self):
+        from tasks import send_event_email
+
+        send_event_email.s(self).apply_async()
+
+    def send_email(self):
+        self.related_event.send_email(self.act_on)
