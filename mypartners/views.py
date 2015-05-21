@@ -34,7 +34,7 @@ from mysearches.models import PartnerSavedSearch
 from mysearches.helpers import (url_sort_options, parse_feed,
                                 get_interval_from_frequency)
 from mysearches.forms import PartnerSavedSearchForm
-from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
+from mypartners.forms import (PartnerForm, ContactForm,
                               NewPartnerForm, ContactRecordForm, TagForm,
                               LocationForm)
 from mypartners.models import (Partner, Contact, ContactRecord,
@@ -142,7 +142,8 @@ def partner_details(request):
 
     form = PartnerForm(instance=partner, auto_id=False)
 
-    contacts = Contact.objects.filter(partner=partner)
+    contacts = Contact.objects.filter(
+        partner=partner, archived_on__isnull=True)
     contact_ct_id = ContentType.objects.get_for_model(Contact).id
     partner_ct_id = ContentType.objects.get_for_model(Partner).id
 
@@ -188,8 +189,9 @@ def edit_item(request):
             item = get_object_or_404(Contact, partner=partner, pk=item_id)
             form = ContactForm(instance=item, auto_id=False)
         else:
-            contacts = list(partner.contact_set.values(
-                'pk', 'name', 'email', 'phone'))
+            contacts = list(partner.contact_set.filter(
+                archived_on__isnull=True).values(
+                    'pk', 'name', 'email', 'phone'))
             form = ContactForm()
             item = None
     elif request.path == reverse('create_partner'):
@@ -224,10 +226,8 @@ def edit_item(request):
 
 @company_has_access('prm_access')
 def save_init_partner_form(request):
-    if 'partnername' in request.POST:
-        form = NewPartnerForm(user=request.user, data=request.POST)
-    else:
-        form = PartnerInitialForm(user=request.user, data=request.POST)
+    form = NewPartnerForm(user=request.user, data=request.POST)
+
     if form.is_valid():
         form.save()
         return HttpResponse(status=200)
@@ -318,7 +318,7 @@ def delete_prm_item(request):
                                            id=item_id)
         partner = get_object_or_404(Partner, id=partner_id, owner=company)
         log_change(contact_record, None, request.user, partner,
-                   contact_record.contact_name, action_type=DELETION)
+                   contact_record.contact.name, action_type=DELETION)
         contact_record.delete()
         return HttpResponseRedirect(reverse('partner_records')+'?company=' +
                                     str(company.id)+'&partner=' +
@@ -725,7 +725,7 @@ def prm_records(request):
 
     contact_choices = [
         (c, c) for c in contact_records.order_by(
-            'contact_name').distinct().values_list('contact_name', flat=True)]
+            'contact__name').distinct().values_list('contact__name', flat=True)]
     contact_choices.insert(0, ('all', 'All'))
 
     ctx = {
@@ -760,6 +760,7 @@ def prm_edit_records(request):
                 instance = ContactRecord.objects.get(pk=record_id)
             except ContactRecord.DoesNotExist:
                 instance = None
+
         form = ContactRecordForm(request.POST, request.FILES,
                                  partner=partner, instance=instance)
         if form.is_valid():
@@ -828,32 +829,35 @@ def get_contact_information(request):
     phone number if they have one.
 
     """
-    _, partner, _ = prm_worthy(request)
+    if request.method == "POST" and request.is_ajax():
+        _, partner, _ = prm_worthy(request)
 
-    contact_id = request.REQUEST.get('contact_name')
-    try:
-        contact = Contact.objects.get(pk=contact_id)
-    except Contact.DoesNotExist:
-        data = {'error': 'Contact does not exist'}
-        return HttpResponse(json.dumps(data))
+        contact_id = request.POST.get('contact') or None
+        try:
+            contact = Contact.objects.get(pk=contact_id)
+        except Contact.DoesNotExist:
+            data = {'error': 'Contact does not exist'}
+            return HttpResponse(json.dumps(data))
 
-    if partner != contact.partner:
-        data = {'error': 'Permission denied'}
-        return HttpResponse(json.dumps(data))
+        if partner != contact.partner:
+            data = {'error': 'Permission denied'}
+            return HttpResponse(json.dumps(data))
 
-    if hasattr(contact, 'email'):
-        if hasattr(contact, 'phone'):
-            data = {'email': contact.email,
-                    'phone': contact.phone}
+        if hasattr(contact, 'email'):
+            if hasattr(contact, 'phone'):
+                data = {'email': contact.email,
+                        'phone': contact.phone}
+            else:
+                data = {'email': contact.email}
         else:
-            data = {'email': contact.email}
+            if hasattr(contact, 'phone'):
+                data = {'phone': contact.phone}
+            else:
+                data = {}
+
+        return HttpResponse(json.dumps(data))
     else:
-        if hasattr(contact, 'phone'):
-            data = {'phone': contact.phone}
-        else:
-            data = {}
-
-    return HttpResponse(json.dumps(data))
+        return Http404("This view is only reachable by an AJAX POST request.")
 
 
 @company_has_access('prm_access')
@@ -940,76 +944,16 @@ def get_uploaded_file(request):
 def partner_main_reports(request):
     company, partner, user = prm_worthy(request)
     dt_range, date_str, records = get_records_from_request(request)
-    total_records_wo_followup = records.exclude(contact_type='job').count()
-    referral = records.filter(contact_type='job').count()
-
-    # need to order_by -count to keep the "All Contacts" list in proper order
-    all_contacts_with_records = records\
-        .values('contact_name', 'contact_email')\
-        .annotate(count=Count('contact_name')).order_by('-count')
-
-    # Used for Top Contacts
-    contact_records = records\
-        .exclude(contact_type='job')\
-        .values('contact_name', 'contact_email')\
-        .annotate(count=Count('contact_name')).order_by('-count')
-
-    # Individual Referral Records count
-    referral_list = records.filter(contact_type='job')\
-        .values('contact_name', 'contact_email')\
-        .annotate(count=Count('contact_name'))
-
-    # Merge contact_records with referral_list and have all contacts
-    # A contact can have 0 contact records and 1 referral record and still show
-    # up vice versa with 1 contact record and 0 referrals
-    contacts = []
-    for contact_obj in all_contacts_with_records:
-        contact = {}
-        name = contact_obj['contact_name']
-        email = contact_obj['contact_email']
-        contact['name'] = name
-        contact['email'] = email
-        for cr in contact_records:
-            if cr['contact_name'] == name and cr['contact_email'] == email:
-                contact['cr_count'] = cr['count']
-        if not 'cr_count' in contact:
-            contact['cr_count'] = 0
-        for ref in referral_list:
-            if ref['contact_name'] == name and ref['contact_email'] == email:
-                contact['ref_count'] = ref['count']
-        if not 'ref_count' in contact:
-            contact['ref_count'] = 0
-        contacts.append(contact)
-
-    # Find all contacts that have no contact records
-    # Based off of contacts list
-    contacts_to_be_added = [contact for contact in partner.contact_set.all()
-                            if contact.email not in
-                            [record['email'] for record in contacts]]
-
-    # Add Contacts that have no contact records
-    for contact_obj in contacts_to_be_added:
-        contact = {'name': contact_obj.name, 'email': contact_obj.email,
-                   'cr_count': 0, 'ref_count': 0}
-        contacts.append(contact)
-
-    # calculate 'All Others' in Top Contacts (when more than 3)
-    total_others = 0
-    if contact_records.count() > 3:
-        others = contact_records[3:]
-        contact_records = contact_records[:3]
-        for contact in others:
-            total_others += contact['count']
 
     ctx = {
         'admin_id': request.REQUEST.get('admin'),
         'partner': partner,
         'company': company,
-        'contacts': contacts,
-        'total_records': total_records_wo_followup,
-        'referral': referral,
-        'top_contacts': contact_records,
-        'others': total_others,
+        'contacts': records.contacts,
+        'total_records': records.communication_activity.count(),
+        'referral': records.referrals,
+        'top_contacts': records.contacts[:3],
+        'others': sum(contact['records'] for contact in records.contacts[3:]),
         'view_name': 'PRM',
         'date_start': dt_range[0],
         'date_end': dt_range[1],
@@ -1065,48 +1009,27 @@ def partner_get_referrals(request):
     if request.method == 'GET':
         prm_worthy(request)
         dt_range, date_str, records = get_records_from_request(request)
-        referrals = records.filter(contact_type='job')
-
-        # (job application, job interviews, job hires)
-        nums = referrals.values_list('job_applications', 'job_interviews',
-                                     'job_hires')
-
-        applications, interviews, hires = 0, 0, 0
-        # add numbers together
-        for num_set in nums:
-            try:
-                applications += int(num_set[0])
-            except (ValueError, KeyError):
-                pass
-            try:
-                interviews += int(num_set[1])
-            except (ValueError, KeyError):
-                pass
-            try:
-                hires += int(num_set[2])
-            except (ValueError, KeyError):
-                pass
 
         # figure names
-        if applications != 1:
+        if records.applications != 1:
             app_name = 'Applications'
         else:
             app_name = 'Application'
-        if interviews != 1:
+        if records.interviews != 1:
             interview_name = 'Interviews'
         else:
             interview_name = 'Interview'
-        if hires != 1:
+        if records.hires != 1:
             hire_name = 'Hires'
         else:
             hire_name = 'Hire'
 
         data = {
-            'applications': {'count': applications, 'name': app_name,
+            'applications': {'count': records.applications, 'name': app_name,
                              'typename': 'job'},
-            'interviews': {'count': interviews, 'name': interview_name,
+            'interviews': {'count': records.interviews, 'name': interview_name,
                            'typename': 'job'},
-            'hires': {'count': hires, 'name': hire_name,
+            'hires': {'count': records.hires, 'name': hire_name,
                       'typename': 'job'},
         }
 
@@ -1306,7 +1229,7 @@ def process_email(request):
                      (admin_user.get_full_name(), contact.name)
         record = ContactRecord.objects.create(partner=contact.partner,
                                               contact_type='email',
-                                              contact_name=contact.name,
+                                              contact=contact,
                                               contact_email=contact.email,
                                               contact_phone=contact.phone,
                                               created_by=admin_user,
@@ -1344,7 +1267,8 @@ def tag_names(request):
         data = {'name': value}
         tag_names = list(Tag.objects.from_search(company, data).values_list(
             'name', flat=True))
-        tag_names = sorted(tag_names, key=lambda x: x if not x.startswith(value) else "-" + x)
+        tag_names = sorted(
+            tag_names, key=lambda x: x if not x.startswith(value) else "-" + x)
         return HttpResponse(json.dumps(tag_names))
 
 
