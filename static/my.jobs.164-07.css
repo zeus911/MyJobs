@@ -1794,6 +1794,17 @@ h3.bottom-bordered {
     line-height: 14px;
 }
 
+.table-striped.report-table th {
+    position: relative;
+    padding: 8px 10px;
+}
+
+.table-striped.report-table th:last-of-type > i.fa {
+    position: absolute;
+    top: 10px;
+    right: 0;
+}
+
 .table-striped.report-table tbody tr:nth-child(even) td {
     background-color: #FFF;
 }
