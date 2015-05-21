@@ -155,13 +155,18 @@ Pager.prototype = {
         // ajax call.
         var alsoThis = this;
         var url = this._build_url(type);
-        $.get(
-            url,
-            data,
-            function(html) {
-                alsoThis._getItemsSuccessHandler(url ? html : "", parent);
-            }
-        );
+
+        if (url) {
+            $.get(
+                url,
+                data,
+                function(html) {
+                    alsoThis._getItemsSuccessHandler(html, parent);
+                }
+            );
+        } else {
+            alsoThis._getItemsSuccessHandler("", parent);
+        }
     },
 
     _build_url: function(type){
