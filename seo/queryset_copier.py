@@ -77,7 +77,7 @@ def build_object_kwargs(obj, queue, include_null=False):
                                              'to create object %s.'
                                              % (fk_object, obj))
                 kwargs[field.name] = new_fk_object
-        elif not isinstance(field, models.ForeignKey):
+        else:
             kwargs[field.attname] = getattr(obj, field.attname)
 
     kwargs['pk'] = obj.pk
@@ -98,9 +98,7 @@ def copy_following_relationships(queryset, copy_to='qc-redirect'):
              during the process.
 
     """
-    queue = populate_queue(queryset)
-    queue = create_in_order(copy_to, queue)
-    return queue
+    return create_in_order(copy_to, populate_queue(queryset))
 
 
 def create_in_order(copy_to, queue):
