@@ -114,12 +114,12 @@ def create_in_order(copy_to, queue):
              relevant errors recorded.
 
     """
-    iterator = len(queue.items()) - 1
+    index = len(queue.items()) - 1
 
     # Create all the objects with only the non-relationship fields and
     # required foreign keys.
     while [item for item in queue.items() if item[1]['status'] not in SAVED_STATES]:
-        obj = queue.items()[iterator][1]['object']
+        obj = queue.items()[index][1]['object']
         key = object_to_key(obj)
 
         can_save = True
@@ -137,9 +137,9 @@ def create_in_order(copy_to, queue):
         if can_save:
             queue = save_object(copy_to, obj, queue)
 
-        iterator -= 1
-        if iterator < 0:
-            iterator = len(queue.items()) - 1
+        index -= 1
+        if index < 0:
+            index = len(queue.items()) - 1
 
     # Resave all objects with the extra "unnecessary" relationships
     # (i.e. nullable foreign keys and many-to-manys)
@@ -422,9 +422,9 @@ def populate_queue(queryset):
     for obj in queryset:
         queue = add_to_queue(obj, queue)
 
-    iterator = 0
-    while iterator < len(queue.items()):
-        obj = queue.items()[iterator][1]['object']
+    index = 0
+    while index < len(queue.items()):
+        obj = queue.items()[index][1]['object']
 
         for fk_field in get_foreign_keys(obj):
             fk = get_foreign_key_object_for_field(obj, fk_field)
@@ -441,7 +441,7 @@ def populate_queue(queryset):
         for m2m in m2m_objects:
             queue = add_to_queue(m2m, queue)
 
-        iterator += 1
+        index += 1
 
     return queue
 

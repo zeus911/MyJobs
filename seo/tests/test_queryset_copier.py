@@ -4,11 +4,11 @@ from seo.tests.setup import DirectSEOBase
 from seo.tests import factories
 
 
-class QuerysetCopier(DirectSEOBase):
+class QuerysetCopierTests(DirectSEOBase):
     multi_db = True
 
     def setUp(self):
-        super(QuerysetCopier, self).setUp()
+        super(QuerysetCopierTests, self).setUp()
         self.copy_to = factories.copy_to_database
 
         # Using SeoSite for the object being copied because it covers
