@@ -39,8 +39,9 @@ from seo.models import (ATSSourceCode, BillboardHotspot, BillboardImage,
                         CustomPage, FlatPage, GoogleAnalytics,
                         GoogleAnalyticsCampaign, SeoSite, SeoSiteFacet,
                         SeoSiteRedirect, SiteTag, SpecialCommitment, ViewSource)
-
+from seo.queryset_copier import copy_following_relationships
 from seo.signals import check_message_queue
+
 
 csrf_protect_m = method_decorator(csrf_protect)
 
@@ -1244,9 +1245,6 @@ def check_inline_instance(obj, req):
         return obj.get_inline_instances(req)
     else:
         return obj.inline_instances
-
-
-from queryset_copier import copy_following_relationships
 
 
 def copy_to_qc(modeladmin, request, queryset):
