@@ -32,6 +32,10 @@ def humanize(records):
     parser = HTMLParser.HTMLParser()
 
     for record in records:
+        for key, value in record.items():
+            if value is None:
+                record[key] = ''
+
         # make tag lists look pretty
         if 'tags' in record:
             record['tags'] = ', '.join(record['tags'])
@@ -51,9 +55,6 @@ def humanize(records):
             record['notes'] = '\n'.join(
                 filter(bool, record['notes'].split('\n\n')))
 
-        for key, value in record.items():
-            if value is None:
-                record[key] = ''
 
     return records
 
