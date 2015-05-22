@@ -166,7 +166,7 @@ def create_new_object(copy_to, base_model, **kwargs):
     """
     try:
         return base_model.objects.using(copy_to).create(**kwargs)
-    except IntegrityError, e:
+    except IntegrityError as e:
         duplicate = find_duplicate_object(copy_to, base_model, e, **kwargs)
         return update_existing_object(copy_to, duplicate, **kwargs)
 
@@ -191,7 +191,7 @@ def find_duplicate_object(database, base_model, integrity_error, **kwargs):
         value = kwargs.get(key)
         obj = base_model.objects.using(database).get(**{key: value})
         return obj
-    except IndexError, e:
+    except IndexError:
         raise IntegrityError('A duplicate entry for an object of type %s '
                              ' was found. The copier was unable to '
                              'de-duplicate the object.' % base_model)
@@ -387,7 +387,7 @@ def full_save_object(copy_to, obj, queue):
                                                         include_null=True)
 
         queue[key]['status'] = COMPLETE
-    except Exception, e:
+    except Exception as e:
         queue[key]['status'] = ERROR
         queue[key]['error'] = e
 
@@ -465,7 +465,7 @@ def save_object(copy_to, obj, queue):
     try:
         queue[key]['new_object'] = get_or_create_object(copy_to, obj, queue)
         queue[key]['status'] = SAVED
-    except Exception, e:
+    except Exception as e:
         queue[key]['status'] = ERROR
         queue[key]['error'] = e
         return queue
