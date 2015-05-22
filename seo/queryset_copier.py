@@ -10,8 +10,8 @@ NOT_STARTED = 0
 SAVED = 1
 COMPLETE = 2
 
-saved_states = [SAVED, COMPLETE, ERROR]
-complete_states = [COMPLETE, ERROR]
+SAVED_STATES = [SAVED, COMPLETE, ERROR]
+COMPLETE_STATES = [COMPLETE, ERROR]
 
 
 def add_to_queue(queue_object, queue):
@@ -120,7 +120,7 @@ def create_in_order(copy_to, queue):
 
     # Create all the objects with only the non-relationship fields and
     # required foreign keys.
-    while [item for item in queue.items() if item[1]['status'] not in saved_states]:
+    while [item for item in queue.items() if item[1]['status'] not in SAVED_STATES]:
         obj = queue.items()[iterator][1]['object']
         key = object_to_key(obj)
 
@@ -193,17 +193,10 @@ def find_duplicate_object(database, base_model, integrity_error, **kwargs):
         value = kwargs.get(key)
         obj = base_model.objects.using(database).get(**{key: value})
         return obj
-    except base_model.DoesNotExist, e:
-        print key, value, integrity_error, e
-        raise ObjectDoesNotExist(e)
-    except base_model.MultipleObjectsReturned, e:
-        print key, value, integrity_error, e
-        raise ObjectDoesNotExist(e)
     except IndexError, e:
         raise IntegrityError('A duplicate entry for an object of type %s '
                              ' was found. The copier was unable to '
                              'de-duplicate the object.' % base_model)
-
 
 
 def get_foreign_keys(obj, null=False):
