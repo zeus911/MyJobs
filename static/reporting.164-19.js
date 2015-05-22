@@ -1610,18 +1610,19 @@ function renderGraphs(report_id, callback) {
           if (contacts.length) {
             restRow = $('<div class="row"></div>').append(function() {
               var div = $('<div class="span12"></div>'),
-                  table = $('<table class="table table-striped report-table"><thead><tr><th>Name</th>' +
+                  $table = $('<table class="table table-striped report-table"><thead><tr><th>Name</th>' +
                             '<th>Email</th><th>Partner</th><th>Contact Records</th><th>Referral Reocrds</th>' +
                             '</tr></thead></table>'),
-                  tbody = $('<tbody></tbody>');
-              tbody.append(function() {
+                  $tbody = $('<tbody></tbody>');
+
+              $tbody.append(function() {
                 // turn each element into cells of a table then join each group of cells with rows.
                 return "<tr class='report'>" + contacts.map(function(contact) {
                   return "<td data-name='" + contact.contact__name + "' data-email='" + contact.contact_email + "' data-partner='" + contact.partner + "'>" + contact.contact__name + "</td><td>" + contact.contact_email +
                          "</td><td>" + contact.partner__name + "</td><td>" + contact.records + "</td><td>" + contact.referrals + "</td>";
                 }).join('</tr><tr class="report">') + "</tr>";
               });
-              tbody.find("tr").on("click", function(e) {
+              $tbody.find("tr").on("click", function(e) {
                 var row = e.currentTarget,
                     $td = $(row).find("td:first"),
                     name = $td.data("name"),
@@ -1631,7 +1632,9 @@ function renderGraphs(report_id, callback) {
                 window.open("/prm/view/records?partner=" + partner + "&contact=" + name + "&keywords=" + email, "_blank");
               });
 
-              return div.append(table.append(tbody));
+              $table.append($tbody);
+              $table.find("th").on("click", sortTable);
+              return div.append($table);
 
             });
           } else {
@@ -1658,8 +1661,6 @@ function renderViewPartner(id) {
   var data = {id: id},
       url = location.protocol + "//" + location.host; // https://secure.my.jobs
 
-         '<i class="fa fa-plus-square-o"></i>' +
-
   $.ajax({
     type: "GET",
     url: url + "/reports/view/mypartners/partner",
@@ -1671,15 +1672,12 @@ function renderViewPartner(id) {
           $tbody = $('<tbody></tbody>'),
           $mainContainer = $("#main-container");
 
-      $table.find('th').each(function(e) {
-        e.append('<i class="fa fa-pulse-squre-o"></i>');
-      });
-
       $tbody.append(function() {
         return '<tr class="record">' + data.map(function(record) {
             return '<td>' + record.name + '</td><td>' + record.primary_contact + '</td>';
           }).join('</tr><tr>') + '</tr>';
       });
+
 
       $mainContainer.html("").append($span.append($table.append($tbody)));
       // make table sortable by column
@@ -1703,15 +1701,15 @@ function renderViewContact(id) {
                      '<th>Partner</th><th>Name</th><th>Phone</th><th>Email</th><th>State(s)</th></tr></thead></table>'),
           $tbody = $('<tbody></tbody>'),
           $mainContainer = $("#main-container"),
-          location;
+          states;
 
       // Append content to Table's tbody.
       $tbody.append('<tr class="record">' + data.map(function(record) {
         // Create a list of States based off of locations
         // in a format of City, State
-        location = record.locations.map(function(location) {
+        states = record.locations.map(function(states) {
             // for each location get state and trim whitespace
-            return (location.split(',')[1] || '').trim();
+            return (states.split(',')[1] || '').trim();
             // Determine uniqueness
           }).sort().filter(function(e, i, a) {
             // Due to sort, duplicates will be together.
@@ -1720,7 +1718,7 @@ function renderViewContact(id) {
           }).join(', ');
 
         return '<td>' + record.partner + '</td><td>' + record.name + '</td><td>' + record.phone + '</td>' +
-               '<td>' + record.email + '</td><td>' + location + '</td>';
+               '<td>' + record.email + '</td><td>' + states + '</td>';
         }).join('</tr><tr>') + '</tr>'
       );
 
@@ -1731,7 +1729,21 @@ function renderViewContact(id) {
   });
 }
 
+/* Bind to table headers' click event to make that table sortable. */
 function sortTable() {
+  function compare(index) {
+    return function(a, b) {
+      var valA = getCellValue(a, index),
+          valB = getCellValue(b, index);
+
+      return $.isNumeric(valA) && $.isNumeric(valB) ? valA - valB : valA.localeCompare(valB);
+    };
+  }
+
+  function getCellValue(row, index) {
+    return $(row).children('td').eq(index).html();
+  }
+
   var $table = $(this).parents('table').eq(0),
       rows = $table.find('tr:gt(0)').toArray().sort(compare($(this).index()));
 
@@ -1744,23 +1756,12 @@ function sortTable() {
     rows = rows.reverse();
   }
 
-  for (var i = 0; i < rows.length; i++) {
-    $table.append(rows[i]);
-  }
+  rows.forEach(function(e) {
+    $table.append(e);
+  });
+
 }
 
-function compare(index) {
-  return function(a, b) {
-    var valA = getCellValue(a, index),
-        valB = getCellValue(b, index);
-
-    return $.isNumeric(valA) && $.isNumeric(valB) ? valA - valB : valA.localeCompare(valB);
-  };
-}
-
-function getCellValue(row, index) {
-  return $(row).children('td').eq(index).html();
-}
 
 function renderArchive(callback) {
   $.ajax({
