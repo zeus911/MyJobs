@@ -19,16 +19,10 @@ DATABASES = {
 HAYSTACK_CONNECTIONS = {
     'default': {
         'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
-        'URL': 'http://ec2-50-19-85-235.compute-1.amazonaws.com:8983/solr',
+        'URL': 'http://ec2-54-225-127-98.compute-1.amazonaws.com:8983/solr',
         'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
         'HTTP_AUTH_PASSWORD': SOLR_AUTH['password']
     },
-    'groups': {
-        'ENGINE': 'saved_search.groupsearch.SolrGrpEngine',
-        'URL': 'http://ec2-50-19-85-235.compute-1.amazonaws.com:8983/solr',
-        'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
-        'HTTP_AUTH_PASSWORD': SOLR_AUTH['password']
-    }
 }
 
 TEMPLATE_DIRS = (
