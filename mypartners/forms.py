@@ -67,7 +67,8 @@ class ContactForm(NormalizedModelForm):
     class Meta:
         form_name = "Contact Information"
         model = Contact
-        exclude = ['user', 'partner', 'locations', 'library', 'archived_on']
+        exclude = ['user', 'partner', 'locations', 'library', 'archived_on',
+                   'approval_status']
         widgets = generate_custom_widgets(model)
         widgets['notes'] = forms.Textarea(
             attrs={'rows': 5, 'cols': 24,
@@ -181,7 +182,8 @@ class NewPartnerForm(NormalizedModelForm):
     class Meta:
         form_name = "Partner Information"
         model = Contact
-        exclude = ['user', 'partner', 'tags', 'locations', 'library']
+        exclude = ['user', 'partner', 'tags', 'locations', 'library',
+                   'approval_status']
         widgets = generate_custom_widgets(model)
         widgets['notes'] = forms.Textarea(
             attrs={'rows': 5, 'cols': 24,

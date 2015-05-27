@@ -51,9 +51,8 @@ class Status(models.Model):
     )
     
     code = models.PositiveSmallIntegerField(
-        default=UNPROCESSED, choices=STATUS_CODES, verbose_name="Status Code")
-    last_modified = models.DateTimeField(
-        null=False, verbose_name="Last Modified")
+        default=APPROVED, choices=STATUS_CODES, verbose_name="Status Code")
+    last_modified = models.DateTimeField(verbose_name="Last Modified")
 
     def save(self, *args, **kwargs):
         self.last_modified = datetime.now()
@@ -215,6 +214,8 @@ class Contact(models.Model):
     notes = models.TextField(max_length=1000, verbose_name='Notes',
                              blank=True, default="")
     archived_on = models.DateTimeField(null=True)
+    approval_status = models.ForeignKey(
+        'mypartners.Status', null=True, verbose_name="Approval Status")
 
     company_ref = 'partner__owner'
     objects = SearchParameterManager()
@@ -295,6 +296,10 @@ class Contact(models.Model):
                     pass
                 else:
                     self.user = user
+
+        if not self.approval_status:
+            self.approval_status = Status()
+
         return super(Contact, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
@@ -372,6 +377,8 @@ class Partner(models.Model):
     tags = models.ManyToManyField('Tag', null=True)
     # owner is the Company that owns this partner.
     owner = models.ForeignKey('seo.Company')
+    approval_status = models.ForeignKey(
+        'mypartners.Status', null=True, verbose_name="Approval Status")
 
     company_ref = 'owner'
     objects = SearchParameterManager()
@@ -437,6 +444,12 @@ class Partner(models.Model):
         return self.name
 
     natural_key = __unicode__
+
+    def save(self, *args, **kwargs):
+        if not self.approval_status:
+            self.approval_status = Status()
+
+        super(Partner, self).save(*args, **kwargs)
 
     # get_searches_for_partner
     def get_searches(self):
@@ -694,6 +707,8 @@ class ContactRecord(models.Model):
     job_hires = models.CharField(max_length=6, verbose_name="Number of Hires",
                                  blank=True, default="")
     tags = models.ManyToManyField('Tag', null=True)
+    approval_status = models.ForeignKey(
+        'mypartners.Status', null=True, verbose_name="Approval Status")
 
     @classmethod
     def _parse_parameters(cls, parameters, records):
@@ -736,6 +751,9 @@ class ContactRecord(models.Model):
         if not self.pk and self.contact:
             self.contact_email = self.contact_email or self.contact.email
             self.contact_phone = self.contact_phone or self.contact.phone
+
+        if not self.approval_status:
+            self.approval_status = Status()
 
         super(ContactRecord, self).save(*args, **kwargs)
 
