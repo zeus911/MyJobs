@@ -39,6 +39,27 @@ ACTIVITY_TYPES = {
 }
 
 
+class Status(models.Model):
+    """ 
+    Keeps track of a particular model's approval status.
+    """
+    UNPROCESSED, APPROVED, DENIED = range(3)
+    STATUS_CODES = (
+        (UNPROCESSED, "Unprocessed"),
+        (APPROVED, "Approved"),
+        (DENIED, "Denied")
+    )
+    
+    code = models.PositiveSmallIntegerField(
+        default=UNPROCESSED, choices=STATUS_CODES, verbose_name="Status Code")
+    last_modified = models.DateTimeField(
+        null=False, verbose_name="Last Modified")
+
+    def save(self, *args, **kwargs):
+        self.last_modified = datetime.now()
+        super(Status, self).save(*args, **kwargs)
+
+
 class SearchParameterQuerySet(models.query.QuerySet):
     """
     Defines a query set with a `from_search` method for filtering by query
@@ -627,7 +648,7 @@ class ContactRecordManager(SearchParameterManager):
         return ContactRecordQuerySet(self.model, using=self._db)
 
     def communication_activity(self):
-        return self.get_query_set().communication_activity()
+        return self.get_query_set().communication_activity
 
 
 class ContactRecord(models.Model):
@@ -900,3 +921,5 @@ class Tag(models.Model):
     class Meta:
         unique_together = ('name', 'company')
         verbose_name = "tag"
+
+
