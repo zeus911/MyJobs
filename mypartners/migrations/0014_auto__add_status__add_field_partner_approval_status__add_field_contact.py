@@ -44,9 +44,10 @@ class Migration(SchemaMigration):
                     approved_by=record.created_by)
                 record.save()
 
-            # TODO: update partner approved_by once we know how to determine it
             for partner in orm.Partner.objects.all():
-                partner.approval_status = orm.Status.objects.create()
+                partner.approval_status = orm.Status.objects.create(
+                    approved_by=getattr(
+                        partner.owner.companyuser_set.first(), 'user', None))
                 partner.save()
 
 
