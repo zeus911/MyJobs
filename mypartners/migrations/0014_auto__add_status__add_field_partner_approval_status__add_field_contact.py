@@ -12,24 +12,42 @@ class Migration(SchemaMigration):
         db.create_table(u'mypartners_status', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('code', self.gf('django.db.models.fields.PositiveSmallIntegerField')(default=1)),
-            ('last_modified', self.gf('django.db.models.fields.DateTimeField')()),
+            ('approved_by', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myjobs.User'], null=True)),
+            ('last_modified', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
         ))
         db.send_create_signal(u'mypartners', ['Status'])
 
         # Adding field 'Partner.approval_status'
         db.add_column(u'mypartners_partner', 'approval_status',
-                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mypartners.Status'], null=True),
+                      self.gf('django.db.models.fields.related.OneToOneField')(to=orm['mypartners.Status'], unique=True, null=True),
                       keep_default=False)
 
         # Adding field 'Contact.approval_status'
         db.add_column(u'mypartners_contact', 'approval_status',
-                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mypartners.Status'], null=True),
+                      self.gf('django.db.models.fields.related.OneToOneField')(to=orm['mypartners.Status'], unique=True, null=True),
                       keep_default=False)
 
         # Adding field 'ContactRecord.approval_status'
         db.add_column(u'mypartners_contactrecord', 'approval_status',
-                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mypartners.Status'], null=True),
+                      self.gf('django.db.models.fields.related.OneToOneField')(to=orm['mypartners.Status'], unique=True, null=True),
                       keep_default=False)
+
+        if not db.dry_run:
+            for contact in orm.Contact.objects.all():
+                contact.approval_status = orm.Status.objects.create(
+                    approved_by=contact.user)
+
+                contact.save()
+
+            for record in orm.ContactRecord.objects.all():
+                record.approval_status = orm.Status.objects.create(
+                    approved_by=record.created_by)
+                record.save()
+
+            # TODO: update partner approved_by once we know how to determine it
+            for partner in orm.Partner.objects.all():
+                partner.approval_status = orm.Status.objects.create()
+                partner.save()
 
 
     def backwards(self, orm):
@@ -97,7 +115,7 @@ class Migration(SchemaMigration):
         },
         u'mypartners.contact': {
             'Meta': {'object_name': 'Contact'},
-            'approval_status': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.Status']", 'null': 'True'}),
+            'approval_status': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['mypartners.Status']", 'unique': 'True', 'null': 'True'}),
             'archived_on': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
             'email': ('django.db.models.fields.EmailField', [], {'max_length': '255', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -126,7 +144,7 @@ class Migration(SchemaMigration):
         },
         u'mypartners.contactrecord': {
             'Meta': {'object_name': 'ContactRecord'},
-            'approval_status': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.Status']", 'null': 'True'}),
+            'approval_status': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['mypartners.Status']", 'unique': 'True', 'null': 'True'}),
             'contact': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.Contact']", 'null': 'True'}),
             'contact_email': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'contact_phone': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '30', 'blank': 'True'}),
@@ -159,7 +177,7 @@ class Migration(SchemaMigration):
         },
         u'mypartners.partner': {
             'Meta': {'object_name': 'Partner'},
-            'approval_status': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.Status']", 'null': 'True'}),
+            'approval_status': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['mypartners.Status']", 'unique': 'True', 'null': 'True'}),
             'data_source': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'library': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.PartnerLibrary']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
@@ -203,9 +221,10 @@ class Migration(SchemaMigration):
         },
         u'mypartners.status': {
             'Meta': {'object_name': 'Status'},
+            'approved_by': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']", 'null': 'True'}),
             'code': ('django.db.models.fields.PositiveSmallIntegerField', [], {'default': '1'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'last_modified': ('django.db.models.fields.DateTimeField', [], {})
+            'last_modified': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         },
         u'mypartners.tag': {
             'Meta': {'unique_together': "(('name', 'company'),)", 'object_name': 'Tag'},

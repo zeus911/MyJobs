@@ -9,7 +9,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import default_storage
 from django.core.urlresolvers import reverse
 from django.db import models
-from django.db.models.signals import pre_delete
+from django.db.models.signals import pre_delete, pre_save
 from django.dispatch import receiver
 
 from myjobs.models import User
@@ -40,23 +40,24 @@ ACTIVITY_TYPES = {
 
 
 class Status(models.Model):
-    """ 
+    """
     Keeps track of a particular model's approval status.
     """
     UNPROCESSED, APPROVED, DENIED = range(3)
-    STATUS_CODES = (
-        (UNPROCESSED, "Unprocessed"),
-        (APPROVED, "Approved"),
-        (DENIED, "Denied")
-    )
-    
-    code = models.PositiveSmallIntegerField(
-        default=APPROVED, choices=STATUS_CODES, verbose_name="Status Code")
-    last_modified = models.DateTimeField(verbose_name="Last Modified")
+    CODES = {
+        UNPROCESSED: 'Unprocessed',
+        APPROVED: 'Approved',
+        DENIED: 'Denied'
+    }
 
-    def save(self, *args, **kwargs):
-        self.last_modified = datetime.now()
-        super(Status, self).save(*args, **kwargs)
+    code = models.PositiveSmallIntegerField(
+        default=APPROVED, choices=CODES.items(), verbose_name="Status Code")
+    approved_by = models.ForeignKey('myjobs.User', null=True)
+    last_modified = models.DateTimeField(
+        auto_now=True, verbose_name="Last Modified")
+
+    def __unicode__(self):
+        return dict(Status.CODES)[self.code]
 
 
 class SearchParameterQuerySet(models.query.QuerySet):
@@ -214,7 +215,7 @@ class Contact(models.Model):
     notes = models.TextField(max_length=1000, verbose_name='Notes',
                              blank=True, default="")
     archived_on = models.DateTimeField(null=True)
-    approval_status = models.ForeignKey(
+    approval_status = models.OneToOneField(
         'mypartners.Status', null=True, verbose_name="Approval Status")
 
     company_ref = 'partner__owner'
@@ -297,9 +298,6 @@ class Contact(models.Model):
                 else:
                     self.user = user
 
-        if not self.approval_status:
-            self.approval_status = Status()
-
         return super(Contact, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
@@ -357,6 +355,14 @@ def delete_contact_locations(sender, instance, **kwargs):
             location.delete()
 
 
+@receiver(pre_save, sender=Contact, dispatch_uid='post_save_contact_signal')
+def save_contact(sender, instance, **kwargs):
+    if not instance.approval_status:
+        # if no relation exists, instance.user will raise an attribute error
+        user = getattr(instance, 'user')
+        instance.approval_status = Status.objects.create(approved_by=user)
+
+
 class Partner(models.Model):
     """
     Object that this whole app is built around.
@@ -377,7 +383,7 @@ class Partner(models.Model):
     tags = models.ManyToManyField('Tag', null=True)
     # owner is the Company that owns this partner.
     owner = models.ForeignKey('seo.Company')
-    approval_status = models.ForeignKey(
+    approval_status = models.OneToOneField(
         'mypartners.Status', null=True, verbose_name="Approval Status")
 
     company_ref = 'owner'
@@ -445,12 +451,6 @@ class Partner(models.Model):
 
     natural_key = __unicode__
 
-    def save(self, *args, **kwargs):
-        if not self.approval_status:
-            self.approval_status = Status()
-
-        super(Partner, self).save(*args, **kwargs)
-
     # get_searches_for_partner
     def get_searches(self):
         saved_searches = self.partnersavedsearch_set.all()
@@ -514,6 +514,14 @@ class Partner(models.Model):
             Tag.objects.filter(contact__in=self.contact_set.all()))
 
         return tags
+
+
+@receiver(pre_save, sender=Partner, dispatch_uid='post_save_partner_signal')
+def save_partner(sender, instance, **kwargs):
+    if not instance.approval_status:
+        # TODO: find out how to get a user for approved_by
+        # if no relation exists, instance.user will raise an attribute error    
+        instance.approval_status = Status.objects.create()
 
 
 class PartnerLibrary(models.Model):
@@ -707,7 +715,7 @@ class ContactRecord(models.Model):
     job_hires = models.CharField(max_length=6, verbose_name="Number of Hires",
                                  blank=True, default="")
     tags = models.ManyToManyField('Tag', null=True)
-    approval_status = models.ForeignKey(
+    approval_status = models.OneToOneField(
         'mypartners.Status', null=True, verbose_name="Approval Status")
 
     @classmethod
@@ -751,9 +759,6 @@ class ContactRecord(models.Model):
         if not self.pk and self.contact:
             self.contact_email = self.contact_email or self.contact.email
             self.contact_phone = self.contact_phone or self.contact.phone
-
-        if not self.approval_status:
-            self.approval_status = Status()
 
         super(ContactRecord, self).save(*args, **kwargs)
 
@@ -803,6 +808,15 @@ class ContactRecord(models.Model):
 
     def shorten_date_time(self):
         return self.date_time.strftime('%b %e, %Y')
+
+
+@receiver(pre_save, sender=ContactRecord, 
+          dispatch_uid='post_save_contactrecord_signal')
+def save_contactrecord(sender, instance, **kwargs):
+    if not instance.approval_status:
+        # if no relation exists, instance.user will raise an attribute error
+        instance.approval_status = Status.objects.create(
+            approved_by=instance.created_by)
 
 
 MAX_ATTACHMENT_MB = 4
