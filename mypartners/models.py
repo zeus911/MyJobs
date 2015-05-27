@@ -9,7 +9,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import default_storage
 from django.core.urlresolvers import reverse
 from django.db import models
-from django.db.models.signals import pre_delete, pre_save
+from django.db.models.signals import pre_delete, pre_save, post_save
 from django.dispatch import receiver
 
 from myjobs.models import User
@@ -355,12 +355,14 @@ def delete_contact_locations(sender, instance, **kwargs):
             location.delete()
 
 
-@receiver(pre_save, sender=Contact, dispatch_uid='post_save_contact_signal')
-def save_contact(sender, instance, **kwargs):
-    if not instance.approval_status:
+@receiver(post_save, sender=Contact, 
+          dispatch_uid='post_save_contact_signal')
+def save_contact(sender, instance, created, **kwargs):
+    if created:
         # if no relation exists, instance.user will raise an attribute error
-        user = getattr(instance, 'user')
-        instance.approval_status = Status.objects.create(approved_by=user)
+        instance.approval_status = Status.objects.create(
+            approved_by=instance.user)
+        instance.save()
 
 
 class Partner(models.Model):
