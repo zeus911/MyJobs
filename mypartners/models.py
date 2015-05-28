@@ -357,7 +357,7 @@ def delete_contact_locations(sender, instance, **kwargs):
 
 @receiver(pre_save, sender=Contact, dispatch_uid='pre_save_contact_signal')
 def save_contact(sender, instance, **kwargs):
-    if not instance.approval_status and instance.user:
+    if not instance.approval_status:
         # if no relation exists, instance.user will raise an attribute error
         instance.approval_status = Status.objects.create(
             approved_by=instance.user)
@@ -953,5 +953,3 @@ class Tag(models.Model):
     class Meta:
         unique_together = ('name', 'company')
         verbose_name = "tag"
-
-
