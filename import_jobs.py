@@ -614,9 +614,8 @@ def add_jobs(jobs, upload_chunk_size=1024):
     conn = Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
     num_jobs = len(jobs)
     # AT&T Showed that large numbers of MOCs can cause import issues due to the size of documents.
-    # Therefore, if the number of MOCs is above 100, arbitrarily use a lower chunk size.
+    # Therefore, when processing AT&T lower the document chunk size.
     for job in jobs:
-
         if int(job['buid']) == 19389:
             logger.warn("AT&T has unreasonable amounts of mapped_mocs, that cause problems.  Reducing chunk size.")
             upload_chunk_size = 64
