@@ -17,6 +17,15 @@ DATABASES = {
         'HOST': 'db-redirectqc.c9shuxvtcmer.us-east-1.rds.amazonaws.com',
         'PORT': '3306',
     },
+    # Points to staging instead of QC for testing purposes.
+    'qc-redirect': {
+        'NAME': 'redirect',
+        'ENGINE': 'django.db.backends.mysql',
+        'USER': 'de_dbuser',
+        'PASSWORD': PROD_DB_PASSWD,
+        'HOST': 'db-redirectstaging.c9shuxvtcmer.us-east-1.rds.amazonaws.com',
+        'PORT': '3306',
+    },
 }
 
 
@@ -46,13 +55,6 @@ HAYSTACK_CONNECTIONS = {
         'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
         'HTTP_AUTH_PASSWORD': SOLR_AUTH['password']
     },
-    'groups': {
-        'ENGINE': 'saved_search.groupsearch.SolrGrpEngine',
-        'URL': 'http://ec2-54-225-127-98.compute-1.amazonaws.com:8983/solr',
-        'TIMEOUT': 300,
-        'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
-        'HTTP_AUTH_PASSWORD': SOLR_AUTH['password']
-    }
 }
 
 ROOT_URLCONF = 'dseo_urls'

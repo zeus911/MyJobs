@@ -2,27 +2,23 @@
 import os
 
 from django.conf import settings
-import mock
-from postajob.models import SitePackage
 
 from seo_pysolr import Solr
-from import_jobs import (
-    DATA_DIR, add_company, remove_expired_jobs, update_solr,
-    get_jobs_from_zipfile, filter_current_jobs, update_job_source)
+from import_jobs import (DATA_DIR, add_company, remove_expired_jobs, update_solr, get_jobs_from_zipfile,
+    filter_current_jobs)
 
-from seo.models import BusinessUnit, Company, SeoSite
+from seo.models import BusinessUnit, Company
 from seo.tests.factories import BusinessUnitFactory, CompanyFactory
 from setup import DirectSEOBase
 
 
 class ImportJobsTestCase(DirectSEOBase):
-    fixtures = ['import_jobs_testdata.json',
-                'locations.json']
+    fixtures = ['import_jobs_testdata.json']
 
     def setUp(self):
         super(ImportJobsTestCase, self).setUp()
         self.businessunit = BusinessUnitFactory(id=0)
-        self.buid_id = self.businessunit.id
+        self.buid_id = self.businessunit.id        
         self.filepath = os.path.join(DATA_DIR, '0', 'dseo_feed_%s.xml' % self.buid_id)
         self.solr_settings = {
             'default': {'URL': 'http://127.0.0.1:8983/solr/seo'}

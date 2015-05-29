@@ -747,6 +747,7 @@ def prm_records(request):
 def prm_edit_records(request):
     company, partner, user = prm_worthy(request)
     record_id = request.GET.get('id', None)
+    page = request.GET.get('page', 1)
 
     try:
         instance = ContactRecord.objects.get(pk=record_id)
@@ -766,8 +767,8 @@ def prm_edit_records(request):
         if form.is_valid():
             form.save(user, partner)
             return HttpResponseRedirect(reverse('record_view') +
-                                        '?partner=%d&id=%d' %
-                                        (partner.id, form.instance.id))
+                                        '?partner=%d&page=%s' %
+                                        (partner.id, page))
     else:
         form = ContactRecordForm(partner=partner, instance=instance)
 
@@ -775,7 +776,7 @@ def prm_edit_records(request):
         'company': company,
         'partner': partner,
         'content_type': ContentType.objects.get_for_model(ContactRecord).id,
-        'object_id': record_id,
+        'item_id': record_id,
         'form': form,
     }
     return render_to_response('mypartners/edit_record.html', ctx,

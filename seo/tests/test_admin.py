@@ -1,5 +1,6 @@
-from setup import DirectSEOBase
-from seo.models import User
+from myjobs.models import User
+from seo.tests.setup import DirectSEOBase
+
 
 admin_seo_links = ["atssourcecode",
                    "billboardimage",
@@ -21,7 +22,7 @@ class SeoAdminTestCase(DirectSEOBase):
         super(SeoAdminTestCase, self).setUp()
         self.password = 'imbatmancalifornia'
         self.user = User.objects.create_superuser(password=self.password,
-                                       email='bc@batyacht.com')
+                                                  email='bc@batyacht.com')
         self.user.save()
         self.client.login(email=self.user.email,
                           password=self.password)
