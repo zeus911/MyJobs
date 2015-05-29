@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block meta-extra %}
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+{% endblock %}
+
+{% block content %}
+
+{% include "myemails/includes/header.html" with title="Company Name?" %}
+
+<div class="row">
+    <div class="span12 notice">
+
+    </div>
+</div>
+
+<div class="row">
+    <div class="span8">
+        <div class="row">
+            <div class="span8">
+                <h4>Active Events</h4>
+                {% for i in "test" %}
+                <div class="product-card no-highlight">
+                    <div>Event Name</div>
+                    <div>
+                        Template:
+                        <span>Template Name 1</span>
+                        <i class="fa fa-pencil edit-template-name" style="cursor: pointer;"></i>
+                    </div>
+                    <div>Last Sent: 4 May 2015 15:23</div>
+                    <a class="btn" href="{% url 'edit-template' %}"><i class="fa fa-pencil fa-lg"></i> Edit</a>
+                    <a class="btn" href="{% url 'view-template' %}"><i class="fa fa-eye fa-lg"></i> View</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="row">
+            <div class="span8">
+                <h4>Inactive Events</h4>
+                {% for i in "test" %}
+                <div class="product-card no-highlight">
+                    <div>Event Name</div>
+                    <div>Template:
+                         <span>Template Name 1</span>
+                         <i class="fa fa-pencil edit-template-name" style="cursor: pointer;"></i>
+                    </div>
+                    <div>Last Sent: 4 May 2015 15:23</div>
+                    <a class="btn" href="{% url 'edit-template' %}" style="right: 95px;"><i class="fa fa-pencil fa-lg"></i> Edit</a>
+                    <a class="btn" href="{% url 'view-template' %}"><i class="fa fa-eye fa-lg"></i> View</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="span4 sidebar">
+        <h2 class="top">Stats</h2>
+        <span style="font-size: 1.5em; font-weight: 700; color: #777">1,041</span> emails sent
+        <span style="font-size: 0.8em; color: #999">all time</span>
+        <br />
+        <span style="font-size: 1.5em; font-weight: 700; color: #777">77</span> emails sent
+        <span style="font-size: 0.8em; color: #999">in the last 30 days</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra-js %}
+<script>
+    $("body").on("click", ".edit-template-name", function() {
+        var $element = $(this).prev("span"),
+            options = "Template Name 1, Template Name 2, Template Name 3, Template Name 4, Template Name 5".split(", "),
+            $select = $("<select></select>");
+
+        $select.append(options.map(function(option) {
+          return '<option value="' + option.replace(/ /g, '_') + '">' + option;
+        }).join("</option>") + "</option>").on("change", function() {
+          var val = $(this).val(),
+              $parent = $(this).parent(),
+              strName = val.replace(/_/g, ' ');
+
+          $parent.html(strName);
+          $parent.after(' <i class="fa fa-pencil edit-template-name" style="cursor: pointer;"></i>');
+//          $(".notice").append('<div class="alert alert-success">' +
+//                              '<button type="button" class="close" data-dismiss="alert">x</button>' +
+//                              'A template name for <b>an Event</b> has been updated.' +
+//                              '</div>');
+        });
+
+        $(this).remove();
+        $element.html($select);
+    });
+</script>
+{% endblock %}

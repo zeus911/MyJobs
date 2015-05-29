@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% include "myemails/includes/header.html" with title="..." %}
+
+<div class="row">
+    <div class="span8">
+        <div class="row">
+            <div class="span8">
+                <h3>Headers</h3>
+                {% for i in "test" %}
+                <div class="product-card no-highlight">
+                    Header-{{forloop.counter}}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="row">
+            <div class="span8">
+                <h3>Footers</h3>
+                {% for i in "test" %}
+                <div class="product-card no-highlight">
+                    Footer-{{forloop.counter}}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
