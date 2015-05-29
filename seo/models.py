@@ -1276,7 +1276,6 @@ class BusinessUnit(models.Model):
     customcareers = generic.GenericRelation(moc_models.CustomCareer)
     federal_contractor = models.BooleanField(default=False)
     ignore_includeinindex = models.BooleanField('Ignore "Include In Index"', default=False)
-    site_package = models.ManyToManyField('postajob.SitePackage', null=True)
 
     # True if a BusinessUnit's descriptions are in markdown
     # Assumes that new business units will have support markdown
