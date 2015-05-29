@@ -338,32 +338,37 @@ class JobFeedTestCase(DirectSEOBase):
         self.assertEqual(jobs[0]['onet'], '')
 
     def test_on_sites_by_buid(self):
+        business_unit = BusinessUnitFactory(pk=77)
 
         results = DEv2JobFeed('seo/tests/data/dseo_feed_0.xml',
-                              jsid=self.businessunit.id,
-                              markdown=self.businessunit.enable_markdown)
+                              jsid=business_unit.id,
+                              markdown=business_unit.enable_markdown)
         jobs = results.solr_jobs()
         for job in jobs:
             self.assertItemsEqual(job['on_sites'], [0])
 
         site_package = SitePackageFactory(owner=self.company)
-        self.businessunit.site_packages.add(site_package)
+        business_unit.site_packages.add(site_package)
 
         results = DEv2JobFeed('seo/tests/data/dseo_feed_0.xml',
-                              jsid=self.businessunit.id,
-                              markdown=self.businessunit.enable_markdown)
+                              jsid=business_unit.id,
+                              markdown=business_unit.enable_markdown)
         jobs = results.solr_jobs()
         for job in jobs:
             self.assertItemsEqual(job['on_sites'], [site_package.pk])
 
         site_package2 = SitePackageFactory(owner=self.company)
-        self.businessunit.site_packages.add(site_package2)
+        business_unit.site_packages.add(site_package2)
 
         results = DEv2JobFeed('seo/tests/data/dseo_feed_0.xml',
-                              jsid=self.businessunit.id,
-                              markdown=self.businessunit.enable_markdown)
+                              jsid=business_unit.id,
+                              markdown=business_unit.enable_markdown)
         jobs = results.solr_jobs()
         for job in jobs:
             self.assertItemsEqual(job['on_sites'], [site_package.pk,
                                                     site_package2.pk])
+
+        site_package2.delete()
+        site_package.delete()
+        business_unit.delete()
 

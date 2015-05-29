@@ -616,27 +616,27 @@ class BusinessUnitForm(SeoSiteReverseForm):
             self.initial['site_packages'] = {site: 'selected'
                                              for site in initial}
 
+        # Override the default help_text since for some reason
+        # ModelMultipleChoiceFields ignore the help_text kwarg.
+        self.fields['site_packages'].help_text = 'This is set on ' \
+                                                 'import and will take until ' \
+                                                 'the next import to show ' \
+                                                 'up or stop.'
+
     def clean_site_packages(self):
         """
         Convert from SeoSite or network sites to a SitePackage.
 
         """
-        if self.cleaned_data.get('post_to') == 'network':
-            company = self.cleaned_data.get('owner', self.company)
-            if not hasattr(company, 'site_package') or not company.site_package:
-                package = SitePackage()
-                package.make_unique_for_company(company)
-            site_packages = [company.site_package]
-        else:
-            sites = self.cleaned_data.get('site_packages')
-            site_packages = []
-            for site in sites:
-                if not hasattr(site, 'site_package') or not site.site_package:
-                    # If a site doesn't already have a site_package specific
-                    # to it create one.
-                    package = SitePackage(name=site.domain)
-                    package.make_unique_for_site(site)
-                site_packages.append(site.site_package)
+        sites = self.cleaned_data.get('site_packages')
+        site_packages = []
+        for site in sites:
+            if not hasattr(site, 'site_package') or not site.site_package:
+                # If a site doesn't already have a site_package specific
+                # to it create one.
+                package = SitePackage(name=site.domain)
+                package.make_unique_for_site(site)
+            site_packages.append(site.site_package)
 
         return site_packages
 
