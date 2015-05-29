@@ -67,12 +67,16 @@ class JobFeed(object):
         self.markdown = markdown
         self.company = company
         if jsid is None:
-            jsid=self.parse_doc('job_source_id')
+            jsid = self.parse_doc('job_source_id')
             if jsid:
-                self.jsid=int(jsid)
+                self.jsid = int(jsid)
         else:
             self.jsid = jsid
-        
+        if self.jsid:
+            self.bu = (get_object_or_none(BusinessUnit, pk=self.jsid)
+                       if self.jsid is not None else None)
+
+
     def jobparse(self):
         """
         """
@@ -417,10 +421,8 @@ class DEJobFeed(JobFeed):
         job_dict['is_posted'] = False
 
         # Determine what sites these jobs should be on
-        bu = (get_object_or_none(BusinessUnit, pk=self.jsid)
-              if self.jsid is not None else None)
-        if bu:
-            on_sites = set(bu.site_packages.values_list('pk', flat=True))
+        if self.bu:
+            on_sites = set(self.bu.site_packages.values_list('pk', flat=True))
             on_sites = filter(None, on_sites)
             job_dict['on_sites'] = on_sites or [0]
         else:

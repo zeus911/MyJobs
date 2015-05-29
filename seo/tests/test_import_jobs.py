@@ -152,44 +152,6 @@ class ImportJobsTestCase(DirectSEOBase):
             ids = [d['id'] for d in self.solr.search('*:*').docs]
             self.assertTrue([5, 6, 7, 8, 9, 10] not in ids)
 
-    def test_set_default_site(self):
-        """
-        When a business unit does not have a site package associated with it
-        (does not have an seo site or its seo site does not have a site
-        package), we should default its jobs to every site. If one or more site
-        packages does exist, we should show its jobs on those sites.
-        """
-        def get_jobsfs_zipfile(guid):
-            path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                'data',
-                                'ActiveDirectory_ce2ca701-eeca-4c13-'
-                                '96ba-e6bde9cb7060.zip')
-            return open(path)
-        with mock.patch('import_jobs.get_jobsfs_zipfile', get_jobsfs_zipfile):
-            # Load jobs with no site package
-            update_job_source('ce2ca701-eeca-4c13-96ba-e6bde9cb7060',
-                              self.buid_id, self.businessunit.title)
-
-        # Grab a job
-        job = self.solr.search('buid:%s' % self.buid_id).docs[0]
-        # The job we grabbed should default to all sites
-        self.assertEqual(job['on_sites'], [0])
-
-        # Add an seo site and site package
-        site = SeoSite.objects.get()
-        site.business_units.add(self.businessunit)
-        package = SitePackage.objects.create()
-        package.sites.add(site)
-        with mock.patch('import_jobs.get_jobsfs_zipfile', get_jobsfs_zipfile):
-            # Reload jobs with a site package
-            update_job_source('ce2ca701-eeca-4c13-96ba-e6bde9cb7060',
-                              self.buid_id, self.businessunit.title)
-
-        # Grab another job
-        job = self.solr.search('buid:%s' % self.buid_id).docs[0]
-        # The job we grabbed should only be on the site we grabbed previously
-        self.assertEqual(job['on_sites'], [package.pk])
-
 
 class LoadETLTestCase(DirectSEOBase):
     def setUp(self):
