@@ -72,9 +72,9 @@ class JobFeed(object):
                 self.jsid = int(jsid)
         else:
             self.jsid = jsid
-        if self.jsid:
-            self.bu = (get_object_or_none(BusinessUnit, pk=self.jsid)
-                       if self.jsid is not None else None)
+
+        self.bu = (get_object_or_none(BusinessUnit, pk=self.jsid)
+                   if self.jsid is not None else None)
 
 
     def jobparse(self):
