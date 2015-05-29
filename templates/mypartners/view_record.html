@@ -30,7 +30,7 @@
             <div class="tip-box" id="details">
             <h5>Contact Details</h5>
                 <div class="tip-content">
-                {{ record.contact_name }} <br/>
+                {{ record.contact.name }} <br/>
                 {% if record.contact_email %}{{ record.contact_email }}<br/>{% endif %}
                 {% if record.contact_phone %}{{ record.contact_phone }}<br/>{% endif %}
                 </div>
@@ -90,7 +90,8 @@
             </div>
         </div>
         <div class="span3">
-            <a class="btn one-hundred-percent-button-border-boxed" href="{% url 'partner_edit_record' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ record.id }}">Edit</a>
+            <a class="btn one-hundred-percent-button-border-boxed" 
+               href="{% url 'partner_edit_record' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ record.id }}&page={{ page }}">Edit</a>
             <div class="tip-box" id="record-history">
             <h5>Record History</h5>
                 <div class="tip-content">
@@ -106,7 +107,7 @@
             <div class="tip-box">
                 <h5>Tags</h5>
                 <div class="tip-content">
-                    {% if not record.tags %}
+                    {% if not record.tags.count %}
                     No tags for this record.
                     {% else %}
                         {% for tag in record.tags.all %}

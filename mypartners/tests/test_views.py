@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 from bs4 import BeautifulSoup
 import csv
+from datetime import datetime, date
 import json
 import random
+import requests
 from StringIO import StringIO
 
 from django.conf import settings
@@ -12,7 +14,6 @@ from django.core import mail
 from django.http import Http404
 from django.test.client import RequestFactory 
 from django.utils.timezone import utc
-import requests
 
 from tasks import PARTNER_LIBRARY_SOURCES
 
@@ -20,11 +21,11 @@ from myjobs.tests.setup import MyJobsBase
 from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
 from mydashboard.tests.factories import CompanyFactory, CompanyUserFactory
+from mymessages.models import MessageInfo
 from mypartners.tests.factories import (PartnerFactory, ContactFactory,
                                         ContactLogEntryFactory, LocationFactory,
                                         ContactRecordFactory, TagFactory)
 from mysearches.tests.factories import PartnerSavedSearchFactory
-from datetime import datetime, date
 from mypartners import views
 from mypartners.models import (Contact, ContactRecord, ContactLogEntry, 
                                Partner, PartnerLibrary, ADDITION)
@@ -312,7 +313,7 @@ class PartnerOverviewTests(MyPartnersTestCase):
             today = date.today()
             # native date time doesn't have AP format so we fake it
             month = today.strftime('%B')
-            if len(month) == 3:
+            if len(month) == 3 and month != 'May':
                 month += "."
             sub_title = "%s %s, %s" % (month, today.day,
                                        today.year)
@@ -526,7 +527,7 @@ class RecordsEditTests(MyPartnersTestCase):
 
         # Create a ContactRecord
         self.contact_record = ContactRecordFactory(partner=self.partner,
-                                                   contact_name=self.contact.name)
+                                                   contact=self.contact)
         self.contact_log_entry = ContactLogEntryFactory(partner=self.partner,
                                                         user=self.contact.user,
                                                         object_id=self.contact_record.id)
@@ -542,7 +543,7 @@ class RecordsEditTests(MyPartnersTestCase):
         form = soup.find('fieldset')
 
         self.assertEqual(len(form(class_='profile-form-input')), 15)
-        self.assertEqual(len(form.find(id='id_contact_name')('option')), 3)
+        self.assertEqual(len(form.find(id='id_contact')('option')), 3)
 
         # Add contact
         ContactFactory(partner=self.partner,
@@ -551,7 +552,7 @@ class RecordsEditTests(MyPartnersTestCase):
         # Test form is updated with new contact
         response = self.client.get(url)
         soup = BeautifulSoup(response.content)
-        form = soup.find(id='id_contact_name')
+        form = soup.find(id='id_contact')
         self.assertEqual(len(form('option')), 4)
 
     def test_render_existing_data(self):
@@ -565,14 +566,14 @@ class RecordsEditTests(MyPartnersTestCase):
         form = soup.find('fieldset')
 
         self.assertEqual(len(form(class_='profile-form-input')), 15)
-        self.assertEqual(len(form.find(id='id_contact_name')('option')), 2)
+        self.assertEqual(len(form.find(id='id_contact')('option')), 3)
 
         contact_type = form.find(id='id_contact_type')
         contact_type = contact_type.find(selected='selected').get_text()
         self.assertEqual(contact_type, 'Email')
 
         self.assertIn(self.contact.name,
-                      form.find(id='id_contact_name').get_text())
+                      form.find(id='id_contact').get_text())
         self.assertIn('example@email.com',
                       form.find(id='id_contact_email')['value'])
         self.assertIn(self.contact_record.subject,
@@ -595,7 +596,7 @@ class RecordsEditTests(MyPartnersTestCase):
                            company=self.company.id)
 
         data = {'contact_type': 'email',
-                'contact_name': self.contact.id,
+                'contact': self.contact.id,
                 'contact_email': 'test@email.com',
                 'contact_phone': '',
                 'location': '',
@@ -630,7 +631,7 @@ class RecordsEditTests(MyPartnersTestCase):
                            id=self.contact_record.id)
 
         data = {'contact_type': 'email',
-                'contact_name': self.contact.id,
+                'contact': self.contact.id,
                 'contact_email': 'test@email.com',
                 'contact_phone': '',
                 'location': '',
@@ -889,6 +890,33 @@ class SearchEditTests(MyPartnersTestCase):
                              msg="%s != %s for field %s" %
                                  (v, getattr(search, k), k))
 
+    def test_deactivate_partner_search(self):
+        mail.outbox = []
+        self.assertEqual(MessageInfo.objects.count(), 0)
+        search = PartnerSavedSearchFactory(user=self.contact_user,
+                                           created_by=self.staff_user)
+        self.client.login_user(search.user)
+        url = self.get_url('save_search_form',
+                           id=search.id, pss=True)
+
+        self.client.post(url, {'search_id': search.pk,
+                               'is_active': False,
+                               'day_of_week': search.day_of_week,
+                               'frequency': search.frequency,
+                               'sort_by': search.sort_by})
+        search = PartnerSavedSearch.objects.get(pk=search.pk)
+        self.assertFalse(search.is_active)
+        self.assertEqual(search.unsubscriber, search.user.email)
+        self.assertTrue(search.unsubscribed)
+
+        email = mail.outbox[0]
+        self.assertEqual(email.to, [search.created_by.email])
+        message_info = MessageInfo.objects.get()
+        self.assertEqual(message_info.user, search.created_by)
+        for text in ['unsubscribed', search.user.email]:
+            self.assertTrue(text in email.body)
+            self.assertTrue(text in message_info.message.body)
+
     def test_copy_existing_saved_search(self):
         saved_search = PartnerSavedSearch.objects.first()
         response = self.client.post('%s?company=%s&partner=%s&copies=%s' %
@@ -1126,10 +1154,10 @@ class EmailTests(MyPartnersTestCase):
         ContactRecord.objects.all().delete()
 
         self.data['text'] = ("-------- Original Message --------\n"
-                             "Subject: 	Test\n"
-                             "Date: 	Wed, 17 Aug 2011 11:39:46 -0400\n"
-                             "From: 	A New Person <anewperson@my.jobs>\n"
-                             "To: 	prm@my.jobs\n")
+                             "Subject:  Test\n"
+                             "Date:     Wed, 17 Aug 2011 11:39:46 -0400\n"
+                             "From:     A New Person <anewperson@my.jobs>\n"
+                             "To:       prm@my.jobs\n")
 
         self.client.post(reverse('process_email'), self.data)
         ContactRecord.objects.get(contact_email='anewperson@my.jobs')
@@ -1279,14 +1307,14 @@ class PartnerLibraryViewTests(PartnerLibraryTestCase):
 
 class ContactLogEntryTests(MyPartnersTestCase):
     def test_contact_record_update(self):
-        record = ContactRecordFactory()
+        record = ContactRecordFactory(contact=self.contact)
 
         url = self.get_url(partner=self.partner.id, company=self.company.id,
                            id=record.id, view='partner_edit_record')
 
         data = {
             'contact_type': 'email',
-            'contact_name': self.contact.id,
+            'contact': self.contact.id,
             'contact_email': 'test@email.com',
             'contact_phone': '',
             'location': '',

@@ -56,8 +56,9 @@ def update_job_source(guid, buid, name, fc, staffing_code, industries, clear_cac
         job['federal_contractor'] = "True" if fc == "1" else "False"
         job['staffing_code'] = "True" if staffing_code == "1" else "False"
         job['network'] = 'False' if 2649 < bu.id < 2704 else 'True'
-    remove_expired_jobs(buid, jobs)
     add_jobs(jobs)
+    remove_expired_jobs(buid, jobs)
+
 
     # Update business information
     bu.associated_jobs = len(jobs)

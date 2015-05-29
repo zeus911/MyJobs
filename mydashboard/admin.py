@@ -49,10 +49,21 @@ get_user_cell.short_description = 'user'
 get_user_cell.allow_tags = True
 
 
+def company_user_name(company):
+    if company.company_user_count == 0:
+        return "%s (%s users) **Might be a duplicate**" % (
+            company.name, company.company_user_count)
+    else:
+        return "%s (%s users)" % (company.name, company.company_user_count)
+
+
 class CompanyUserAdmin(ForeignKeyAutocompleteAdmin):
     related_search_fields = {
         'user': ('email', ),
         'company': ('name', ),
+    }
+    related_string_functions = {
+        'company': company_user_name,
     }
 
     search_fields = ['company__name', 'user__email']

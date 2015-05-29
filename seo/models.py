@@ -640,11 +640,9 @@ class Company(models.Model):
 
     """
     def __unicode__(self):
-        if self.company_user_count == 0:
-            return "%s (%s users) **Might be a duplicate**" % (
-                self.name, self.company_user_count)
-        else:
-            return "%s (%s users)" % (self.name, self.company_user_count)
+        return self.name
+
+    natural_key = __unicode__
 
     class Meta:
         verbose_name = 'Company'
@@ -679,7 +677,7 @@ class Company(models.Model):
     def featured_on(self):
         return ", ".join(self.seosite_set.all().values_list("domain",
                                                             flat=True))
-    
+
     @property
     def company_user_count(self):
         """
@@ -1361,8 +1359,11 @@ class CompanyUser(models.Model):
         If the user is already a member of the Employer group, the Group app
         is smart enough to not add it a second time.
         """
+
+        using = kwargs.get('using', 'default')
+
         inviting_user = kwargs.pop('inviting_user', None)
-        group = Group.objects.get(name=self.GROUP_NAME)
+        group = Group.objects.using(using).get(name=self.GROUP_NAME)
         self.user.groups.add(group)
 
         # There are some cases where a CompanyUser may be adding themselves
@@ -1371,7 +1372,7 @@ class CompanyUser(models.Model):
         if not self.pk and inviting_user:
             Invitation(invitee=self.user, inviting_company=self.company,
                        added_permission=group,
-                       inviting_user=inviting_user).save()
+                       inviting_user=inviting_user).save(using=using)
 
         return super(CompanyUser, self).save(*args, **kwargs)
 

@@ -37,7 +37,7 @@
       var pager_num_items = {{ site_config.num_subnav_items_to_show }};
     </script>
 
-    <script type="text/javascript" src="{{ STATIC_URL }}pager.163-13.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}pager.163-24.js"></script>
 
     {% block ga_js %}{% include "ga.html"%}{% endblock %}
 
@@ -224,9 +224,9 @@
 
 {% block analytics_pixel %}
 {% if the_job %}
-    src="http://my.jobs/pixel.gif?{{request|make_pixel_qs:the_job|safe}}"
+    src="//my.jobs/pixel.gif?{{request|make_pixel_qs:the_job|safe}}"
 {% else %}
-    src="http://my.jobs/pixel.gif?{{request|make_pixel_qs|safe}}"
+    src="//my.jobs/pixel.gif?{{request|make_pixel_qs|safe}}"
 {% endif %}/>
 {% endblock %}{# analytics pixel #}
 

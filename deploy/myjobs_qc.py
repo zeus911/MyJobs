@@ -22,6 +22,15 @@ DATABASES = {
         'HOST': 'db-redirectqc.c9shuxvtcmer.us-east-1.rds.amazonaws.com',
         'PORT': '3306',
     },
+    # Points to staging instead of QC for testing purposes.
+    'qc-redirect': {
+        'NAME': 'redirect',
+        'ENGINE': 'django.db.backends.mysql',
+        'USER': 'de_dbuser',
+        'PASSWORD': PROD_DB_PASSWD,
+        'HOST': 'db-redirectstaging.c9shuxvtcmer.us-east-1.rds.amazonaws.com',
+        'PORT': '3306',
+    },
 }
 
 ALLOWED_HOSTS = ['my.jobs', 'localhost']

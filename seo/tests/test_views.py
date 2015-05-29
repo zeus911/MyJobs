@@ -2436,7 +2436,7 @@ class SeoViewsTestCase(DirectSEOTestCase):
         response = self.client.get('/all-companies/')
         self.assertEqual(response.status_code, 200)
         
-    def test_static_page_analytics(self):    	    
+    def test_static_page_analytics(self):           
         site = factories.SeoSiteFactory.build(id=1, domain=u'www.my.jobs',
                                               name='www.my.jobs')
         site.save()

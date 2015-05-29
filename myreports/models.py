@@ -4,14 +4,26 @@ from django.db import models
 from django.db.models.loading import get_model
 
 from myreports.helpers import serialize
+from mypartners.models import SearchParameterManager
 
 
 class Report(models.Model):
+    """
+    Models a Report which can be serialized in various formats.
+
+    A report instance can access it's results in three ways:
+        `json`: returns a JSON string of the results
+        `python`: returns a `dict` of the results
+        `queryset`: returns a queryset obtained by re-running `from_search`
+                    with the report's parameters. Useful for when you need to
+                    use attributes from a related model's instances (eg.
+                    `referrals` from the `ContactRecord` model).
+    """
     name = models.CharField(max_length=50)
     created_by = models.ForeignKey('myjobs.User')
     owner = models.ForeignKey('seo.Company')
     created_on = models.DateTimeField(auto_now_add=True)
-    order_by = models.CharField(max_length=50, blank=True, null=True)
+    order_by = models.CharField(max_length=50, blank=True)
     app = models.CharField(default='mypartners', max_length=50)
     model = models.CharField(default='contactrecord', max_length=50)
     # included columns and sort order
@@ -19,6 +31,10 @@ class Report(models.Model):
     # json encoded string of the params used to filter
     params = models.TextField()
     results = models.FileField(upload_to='reports')
+
+    company_ref = 'owner'
+
+    objects = SearchParameterManager()
 
     def __init__(self, *args, **kwargs):
         super(Report, self).__init__(*args, **kwargs)
@@ -48,6 +64,7 @@ class Report(models.Model):
         return self.name
 
     def regenerate(self):
+        """Regenerate the report file if it doesn't already exist on disk."""
         if not self.results:
             values = json.loads(self.values)
             contents = serialize('json', self.queryset, values=values)

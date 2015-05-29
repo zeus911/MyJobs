@@ -1,13 +1,14 @@
 from collections import OrderedDict
 from cStringIO import StringIO
 import csv
+from datetime import datetime
 import HTMLParser
 import json
 
 from django.core import serializers
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import query
-from django.utils.html import strip_tags
+from lxml import html
 from mypartners.models import CONTACT_TYPES
 
 
@@ -17,9 +18,9 @@ from mypartners.models import CONTACT_TYPES
 def humanize(records):
     """
     Converts values in a dict to their human-readable counterparts. At the
-    moment, this means converting tag ids to a list of tag names, removing the
-    primary key, and converting contact types. As such, this is specifically
-    only useful for contact records.
+    moment, this means converting tag ids to a list of tag names, and
+    converting contact types. As such, this is specifically only useful for
+    contact records.
 
     Inputs:
         :records: `dict` of records to be humanized
@@ -31,16 +32,22 @@ def humanize(records):
     parser = HTMLParser.HTMLParser()
 
     for record in records:
+        for key, value in record.items():
+            if value is None:
+                record[key] = ''
+
         # make tag lists look pretty
         if 'tags' in record:
             record['tags'] = ', '.join(record['tags'])
-        # get rid of pks
-        record.pop('pk', None)
+        # make locations look pretty
+        if 'locations' in record:
+            record['locations'] = '; '.join(record['locations'])
         # human readable contact types
         if 'contact_type' in record:
             record['contact_type'] = CONTACT_TYPES[record['contact_type']]
         # strip html and extra whitespace from notes
         if 'notes' in record:
+            # TODO: Find a faster way to do this
             record['notes'] = parser.unescape('\n'.join(
                 ' '.join(line.split())
                 for line in record['notes'].split('\n') if line))
@@ -48,11 +55,6 @@ def humanize(records):
             record['notes'] = '\n'.join(
                 filter(bool, record['notes'].split('\n\n')))
 
-        # get rid of nones
-        if 'created_by' in record:
-            record['created_by'] = record['created_by'] or ''
-        if 'length' in record:
-            record['length'] = record['length'] or ''
 
     return records
 
@@ -70,98 +72,78 @@ def parse_params(querydict):
     """
     # get rid of empty params and flatten single-item lists
     params = {}
+    bools = {'true': True, 'false': False}
     for key in querydict.keys():
-        value = tuple(filter(bool, querydict.getlist(key)))
-
+        value = filter(bool, querydict.getlist(key))
         if len(value) == 1:
-            value = value[0]
+            params[key] = value[0]
+        else:
+            params[key] = tuple(value)
 
-        params[key] = value
+    params = {key: bools.get(value, value)
+              for key, value in params.items() if value}
 
     return params
 
 
 # TODO:
-#   * find a better way to handle counts
 #   * do something other than isinstance checks (duck typing anyone?)
-def serialize(fmt, data, counts=None, values=None, order_by=None):
+def serialize(fmt, data, values=None, order_by=None):
     """
     Like `django.core.serializers.serialize`, but produces a simpler structure
-    and retains annotated fields*.
+    and retains annotated fields.
 
     Inputs:
         :fmt: The format to serialize to. Currently recognizes 'csv', 'json',
               and 'python'.
         :data: The data to be serialized.
-        :counts: A dictionary mapping primary keys to actual counts. This is a
-                 cludge which should be deprecated in later version of this
-                 function if at all possible.
+        :values: The fields to include in the serialized output.
+        :order_by: The field to sort the serialized records by.
 
     Outputs:
         Either a Python object or a string represention of the requested
         format.
 
-    * Currently, only count with values passed in manually through `counts`.
     """
 
-    if isinstance(data, query.QuerySet):
+    # helper function to deal with different value types in a dict
+    def convert(record, value):
+        val = record[value]
+        # strip html from strings
+        if isinstance(val, basestring) and val:
+            val = html.fromstring(val).text_content()
+        # convert datetime to pretty string
+        if isinstance(val, datetime):
+            val = val.strftime("%b %d, %Y %I:%M%p")
+
+        return val
+
+    if isinstance(data, query.ValuesQuerySet):
+        data = list(data)
+    elif isinstance(data, query.QuerySet):
+        if values:
+            values = [value.split('__')[0] for value in values]
         data = [dict({'pk': record['pk']}, **record['fields'])
                 for record in serializers.serialize(
                     'python', data, use_natural_keys=True, fields=values)]
 
-        if counts:
-            data = [dict({'count': counts[record['pk']]}, **record)
-                    for record in data]
-
-        # Cant' use a ValueQuerSet for serialize, which means we lose the
-        # ability to use distinct. As such, we fake it by doing so manually
-        records = []
-        haystack = []
-
-        for record in data:
-            needle = [record[value]
-                      for value in values] if values else record['pk']
-
-            if needle not in haystack:
-                haystack.append(needle)
-                records.append(record)
-
-        data = records
-
-        # strip HTML tags from string values
-        for index, record in enumerate(data[:]):
-            data[index] = {
-                key: strip_tags(record[key])
-                if isinstance(record[key], basestring) else value
-                for key, value in record.items()}
-
     if data:
-        values = values or data[0].keys()
-        d = []
-        for record in data:
-            o = OrderedDict()
-            for value in values:
-                o[value] = record[value]
+        values = values or sorted(data[0].keys())
+        order_by = order_by or values[0]
+        _, reverse, order_by = sorted(order_by.partition('-'))
 
-            d.append(o)
-
-        reverse = False
-        if order_by:
-            if '-' in order_by:
-                order_by = order_by[1:]
-                reverse = True
-
-            d = sorted(
-                d, key=lambda record: record[order_by], reverse=bool(reverse))
-
-    data = d
+        # Convert data to a list of `OrderedDict`s,
+        data = sorted(
+            [OrderedDict([(value, convert(record, value)) for value in values])
+             for record in data], key=lambda record: record[order_by],
+            reverse=bool(reverse))
 
     if fmt == 'json':
         return json.dumps(data, cls=DjangoJSONEncoder)
     elif fmt == 'csv':
         output = StringIO()
         writer = csv.writer(output)
-        columns = data[0].keys()
+        columns = data[0].keys() if data else []
         writer.writerow([column.replace('_', ' ').title()
                          for column in columns])
 

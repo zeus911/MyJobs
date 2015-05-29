@@ -9,10 +9,20 @@ from django.contrib.sites.models import Site
 from myjobs.tests.factories import UserFactory
 from seo.models import SeoSiteFacet
 
+copy_to_database = 'qc-redirect'
+
 
 class GroupFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Group
+
+    name = factory.fuzzy.FuzzyText("Test")
+
+
+class GroupCopyToFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Group
+        database = copy_to_database
 
     name = factory.fuzzy.FuzzyText("Test")
 
@@ -100,6 +110,18 @@ class SeoSiteFactory(SiteFactory):
     site_title = "Test Site"
 
 
+class SeoSiteCopyToFactory(SiteFactory):
+    class Meta:
+        model = 'seo.SeoSite'
+        database = copy_to_database
+
+    group = factory.SubFactory(GroupCopyToFactory)
+    site_heading = "This is the site header."
+    domain = 'qccopiertest.jobs'
+    name = u'qccopiertest.jobs'
+    site_title = "QC Copier Test Site"
+
+
 class CustomFacetFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'seo.CustomFacet'
@@ -180,7 +202,7 @@ class CompanyFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'seo.Company'
 
-    id = factory.sequence(lambda n: n)
+    id = factory.sequence(lambda n: n+1)
     name = factory.Sequence(lambda n: "Acme Incorporated %d" % n)
     member = True
     company_slug = factory.LazyAttribute(lambda x: slugify(x.name))

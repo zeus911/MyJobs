@@ -4,7 +4,6 @@ import json
 
 from django.core.files.base import ContentFile
 from django.db.models.loading import get_model
-from django.db.models import Count
 from django.http import HttpResponse, Http404
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
@@ -13,6 +12,7 @@ from django.views.generic import View
 
 from myreports.helpers import humanize, parse_params, serialize
 from myreports.models import Report
+from postajob import location_data
 from universal.helpers import get_company_or_404
 from universal.decorators import company_has_access
 
@@ -23,22 +23,24 @@ def overview(request):
     company = get_company_or_404(request)
 
     success = 'success' in request.POST
-
     reports = Report.objects.filter(owner=company).order_by("-created_on")
     report_count = reports.count()
     past_reports = reports[:10]
+    states = OrderedDict(
+        sorted((v, k) for k, v in location_data.states.inv.iteritems()))
 
     ctx = {
         "company": company,
         "success": success,
+        "states": json.dumps(states),
         "past_reports": past_reports,
         "report_count": report_count
     }
 
     if request.is_ajax():
         response = HttpResponse()
-        html = render_to_response('myreports/includes/report_overview.html', ctx,
-                                  RequestContext(request)).content
+        html = render_to_response('myreports/includes/report_overview.html',
+                                  ctx, RequestContext(request)).content
         response.content = html
         return response
 
@@ -48,22 +50,25 @@ def overview(request):
 
 @company_has_access('prm_access')
 def report_archive(request):
+    """Archive of previously run reports."""
     if request.is_ajax():
         company = get_company_or_404(request)
         reports = Report.objects.filter(owner=company).order_by("-created_on")
+
         ctx = {
             "reports": reports
         }
 
         response = HttpResponse()
-        html = render_to_response('myreports/includes/report-archive.html', ctx,
-                                  RequestContext(request))
+        html = render_to_response('myreports/includes/report-archive.html',
+                                  ctx, RequestContext(request))
         response.content = html.content
 
         return response
 
 
 def get_states(request):
+    """Returns a select widget with states as options."""
     if request.is_ajax():
         response = HttpResponse()
         html = render_to_response('includes/state_dropdown.html',
@@ -75,7 +80,7 @@ def get_states(request):
 
 
 @company_has_access('prm_access')
-def view_records(request, app, model):
+def view_records(request, app="myparters", model="contactrecord"):
     """
     Returns records as JSON.
 
@@ -83,6 +88,12 @@ def view_records(request, app, model):
         :request: Request object to inspect for search parameters.
         :app: Application to query.
         :model: Model to query.
+
+    Query String Parameters:
+        :values: The fields to include in the output.
+        :order_by: The field to order the results by. Prefix with a '-' to
+                   indiciate descending order.
+
 
     Output:
        A JSON response containing the records queried for.
@@ -94,17 +105,17 @@ def view_records(request, app, model):
         params = parse_params(request.GET)
 
         # remove non-query related params
-        count = params.pop('count', None)
-        values = params.pop('values', [])
+        values = params.pop('values', None)
         order_by = params.pop('order_by', None)
 
         records = get_model(app, model).objects.from_search(
             company, params)
 
-        counts = {}
-        if count:
-            records = records.annotate(count=Count(count, distinct=True))
-            counts = {record.pk: record.count for record in records}
+        if values:
+            if not hasattr(values, '__iter__'):
+                values = [values]
+
+            records = records.values(*values)
 
         if order_by:
             if not hasattr(order_by, '__iter__'):
@@ -112,7 +123,7 @@ def view_records(request, app, model):
 
             records = records.order_by(*order_by)
 
-        ctx = serialize('json', records, counts=counts, values=values)
+        ctx = serialize('json', records, values=values)
 
         response = HttpResponse(
             ctx, content_type='application/json; charset=utf-8')
@@ -122,19 +133,13 @@ def view_records(request, app, model):
         raise Http404("This view is only reachable via an AJAX GET request.")
 
 
-@company_has_access('prm_access')
-def get_inputs(request):
-    if request.is_ajax() and request.method == "GET":
-        report_id = request.GET.get('id', 0)
-        report = get_object_or_404(Report, pk=report_id)
-        return HttpResponse(
-            report.params, content_type='application/json; charset=utf-8')
-    else:
-        return Http404("This view is only reachable via an AJAX GET request.")
-
-
 class ReportView(View):
-    """View for managing report objects."""
+    """
+    View for managing report objects.
+
+    A GET request will fetch a report, where as a POST will generate a new
+    report.
+    """
 
     app = 'mypartners'
     model = 'contactrecord'
@@ -147,13 +152,24 @@ class ReportView(View):
         """
         Get a report by ID and return interesting numbers as a JSON
         response. The only expected query parameter is 'id'.
-        """
-        if request.method == 'GET':
-            report_id = request.GET.get('id', 0)
-            report = Report.objects.get(id=report_id)
-            records = report.queryset
 
-            ctx = {
+        Query String Parameters:
+            :id: The id of the report to retrieve
+
+        Outputs:
+            Renders a json object with counts for email, calls, searches,
+            meetings, applications, interviews, hires, communications,
+            referrals, and contacts. All these are integers except for
+            contacts, which is a list of objects, each of which has a name,
+            email, referral count, and communications count.
+        """
+
+        report_id = request.GET.get('id', 0)
+        report = Report.objects.get(id=report_id)
+        records = report.queryset
+
+        if report.model == "contactrecord":
+            ctx = json.dumps({
                 'emails': records.emails,
                 'calls': records.calls,
                 'searches': records.searches,
@@ -163,14 +179,13 @@ class ReportView(View):
                 'hires': records.hires,
                 'communications': records.communication_activity.count(),
                 'referrals': records.referrals,
-                'contacts': list(records.contacts)}
-
-            return HttpResponse(
-                json.dumps(ctx),
-                content_type='application/json; charset=utf-8')
+                'contacts': list(records.contacts)})
         else:
-            raise Http404(
-                "This view is only reachable via a GET request.")
+            ctx = report.json
+
+        return HttpResponse(
+            ctx,
+            content_type='application/json; charset=utf-8')
 
     def post(self, request, app='mypartners', model='contactrecords'):
         """
@@ -183,39 +198,56 @@ class ReportView(View):
             :app: The app to which the model belongs.
             :model: The model to query on
 
+        Query String Parameters:
+            :csrfmiddlewaretoken: Used to prevent Cross Site Request Forgery.
+            :report_name: What to name the report. Spaces are converted to
+                          underscores.
+            :values: Fields to include in report output.
+
         Outputs:
            An HttpResponse indicating success or failure of report creation.
         """
+        company = get_company_or_404(request)
+        params = parse_params(request.POST)
 
-        if request.method == 'POST':
-            company = get_company_or_404(request)
-            params = parse_params(request.POST)
+        params.pop('csrfmiddlewaretoken', None)
+        name = params.pop('report_name',
+                          str(datetime.now()))
+        values = params.pop('values', None)
 
-            params.pop('csrfmiddlewaretoken', None)
-            name = params.pop('report_name', 
-                              str(datetime.now())).replace(' ', '_')
-            values = params.pop('values', None)
+        records = get_model(app, model).objects.from_search(
+            company, params)
 
-            records = get_model(app, model).objects.from_search(
-                company, params)
+        if values:
+            if not hasattr(values, '__iter__'):
+                values = [values]
 
-            contents = serialize('json', records, values=values)
-            results = ContentFile(contents)
-            report, created = Report.objects.get_or_create(
-                name=name, created_by=request.user,
-                owner=company, app=app, model=model,
-                values=json.dumps(values), params=json.dumps(params))
+            records = records.values(*values)
 
-            report.results.save('%s-%s.json' % (name, report.pk), results)
+        contents = serialize('json', records, values=values)
+        results = ContentFile(contents)
+        report, created = Report.objects.get_or_create(
+            name=name, created_by=request.user,
+            owner=company, app=app, model=model,
+            values=json.dumps(values), params=json.dumps(params))
 
-            return HttpResponse(name, content_type='text/plain')
-        else:
-            raise Http404(
-                "This view is only reachable via a POST request.")
+        report.results.save('%s-%s.json' % (name, report.pk), results)
+
+        return HttpResponse(name, content_type='text/plain')
 
 
 @company_has_access('prm_access')
 def regenerate(request):
+    """
+    Regenerates a report. 
+    
+    Useful if the report json file is no longer available on disk. If called
+    and the report is already on disk, `Report.regenerate` does nothing.
+
+    Query String Parameters:
+        :id: ID of the report to regenerate.
+    """
+
     if request.method == 'GET':
         report_id = request.GET.get('id', 0)
         report = get_object_or_404(
@@ -232,39 +264,67 @@ def regenerate(request):
 
 @company_has_access('prm_access')
 def downloads(request):
-    report_id = request.GET.get('id', 0)
-    report = get_object_or_404(
-        get_model('myreports', 'report'), pk=report_id)
+    """ Renders a download customization screen.
 
-    fields = sorted([field for field in report.python[0].keys()
-                     if field != 'pk'])
-    values = json.loads(report.values) or fields
-    fields = values + [field for field in fields if field not in values]
+        If the report has `values`, then the screen will render the checkboxes
+        representing those fields as checked and all others as unchecked. The
+        order of the rendered checklist follows these `values`, with all other
+        checkboxes being ordered aphabetically.
 
-    column_choice = ''
-    sort_order = ''
-    if report.order_by:
-        if '-' in report.order_by:
-            sort_order = '-'
-            column_choice = report.order_by[1:]
-        else:
-            column_choice = report.order_by
+        Query String Parameters:
+            :id: ID of the report to show options for.
+    """
 
-    columns = OrderedDict()
-    for field in fields:
-        columns[field.replace('_', ' ').title()] = field in values
+    if request.is_ajax() and request.method == 'GET':
+        report_id = request.GET.get('id', 0)
+        report = get_object_or_404(
+            get_model('myreports', 'report'), pk=report_id)
+        report.regenerate()
 
-    ctx = {'columns': columns,
-           'sort_order': sort_order,
-           'column_choice': column_choice}
+        fields = sorted([field for field in report.python[0].keys()
+                         if field != 'pk'])
 
-    return render_to_response('myreports/includes/report-download.html', ctx,
-                              RequestContext(request))
+        values = json.loads(report.values) or fields
+        fields = values + [field for field in fields if field not in values]
+
+        column_choice = ''
+        sort_order = ''
+        if report.order_by:
+            if '-' in report.order_by:
+                sort_order = '-'
+                column_choice = report.order_by[1:]
+            else:
+                column_choice = report.order_by
+
+        columns = OrderedDict()
+        for field in fields:
+            columns[' '.join(
+                filter(bool, field.split('_'))).title()] = field in values
+
+        ctx = {'columns': columns,
+               'sort_order': sort_order,
+               'column_choice': column_choice}
+
+        return render_to_response('myreports/includes/report-download.html',
+                                  ctx, RequestContext(request))
+    else:
+        raise Http404("This view is only reachable via an AJAX request")
 
 
 @company_has_access('prm_access')
 def download_report(request):
-    """Download report as csv."""
+    """
+    Download report as CSV.
+
+    Query String Parameters:
+        :id: ID of the report to download
+        :values: Fields to include in the resulting CSV, as well as the order
+                 in which to include them.
+        :order_by: The sort order for the resulting CSV.
+
+    Outputs:
+        The report with the specified options rendered as a CSV file.
+    """
 
     report_id = request.GET.get('id', 0)
     values = request.GET.getlist('values', None)
@@ -286,7 +346,7 @@ def download_report(request):
     response = HttpResponse(content_type='text/csv')
     content_disposition = "attachment; filename=%s-%s.csv"
     response['Content-Disposition'] = content_disposition % (
-        report.name, report.pk)
+        report.name.replace(' ', '_'), report.pk)
 
     response.write(serialize('csv', records, values=values, order_by=order_by))
 

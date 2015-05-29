@@ -1,8 +1,6 @@
 """Tests associated with myreports views."""
 
-import csv
 import json
-from cStringIO import StringIO
 
 from django.test import TestCase
 from django.core.urlresolvers import reverse
@@ -11,7 +9,6 @@ from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
 from mypartners.tests.factories import (ContactFactory, ContactRecordFactory,
                                         LocationFactory, PartnerFactory)
-from mypartners.models import ContactRecord
 from myreports.models import Report
 from seo.tests.factories import CompanyFactory, CompanyUserFactory
 
@@ -56,7 +53,7 @@ class TestViewRecords(MyReportsTestCase):
         self.client.login_user(self.user)
 
         ContactRecordFactory.create_batch(
-            10, partner=self.partner, contact_name='Joe Shmoe')
+            10, partner=self.partner, contact__name='Joe Shmoe')
 
     def test_restricted_to_ajax(self):
         """View should only be reachable through AJAX."""
@@ -79,10 +76,10 @@ class TestViewRecords(MyReportsTestCase):
         """Test that filtering contact records through ajax works properly."""
 
         # records to be filtered out
-        ContactRecordFactory.create_batch(10, contact_name='John Doe')
+        ContactRecordFactory.create_batch(10, contact__name='John Doe')
 
         self.client.path += '/contactrecord'
-        response = self.client.get(data={'contact_name': 'Joe Shmoe'})
+        response = self.client.get(data={'contact__name': 'Joe Shmoe'})
         output = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)
@@ -170,19 +167,6 @@ class TestViewRecords(MyReportsTestCase):
 
         self.assertEqual(len(output), 10)
 
-    def test_counts(self):
-        """
-        When `count` is passed to the view, the resulting records should be
-        annotated as a `Count` for the field passed to count.
-        """
-
-        self.client.path += '/partner'
-        response = self.client.get(data={'count': 'contact'})
-        output = json.loads(response.content)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(all('count' in record for record in output))
-
 
 class TestReportView(MyReportsTestCase):
     """
@@ -191,7 +175,8 @@ class TestReportView(MyReportsTestCase):
     """
     def setUp(self):
         super(TestReportView, self).setUp()
-        self.client = TestClient(path='/reports/view/mypartners/contactrecord')
+        self.client = TestClient(path=reverse('reports', kwargs={
+            'app': 'mypartners', 'model': 'contactrecord'}))
         self.client.login_user(self.user)
 
         ContactRecordFactory.create_batch(5, partner__owner=self.company)
@@ -231,8 +216,38 @@ class TestReportView(MyReportsTestCase):
             self.assertEqual(data[key], 5)
 
         # check contact stats
-        self.assertEqual(data['contacts'][0]['records'], 5)
+        self.assertEqual(data['contacts'][0]['records'], 1)
         self.assertEqual(data['contacts'][0]['referrals'], 10)
+
+
+class TestDownloads(MyReportsTestCase):
+    """Tests the reports view."""
+
+    def setUp(self):
+        super(TestDownloads, self).setUp()
+        self.client = TestClient(path=reverse('downloads'),
+                                 HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.client.login_user(self.user)
+
+        ContactRecordFactory.create_batch(10, partner__owner=self.company)
+
+    def test_column_order(self):
+        """Tests that column order is preserved"""
+
+        # create a report whose results is for all contact records in the
+        # company
+        response = self.client.post(
+            path=reverse('reports', kwargs={
+                'app': 'mypartners', 'model': 'contactrecord'}),
+            data={'values': ['partner', 'contact__name', 'contact_type']})
+
+        report_name = response.content
+        report = Report.objects.get(name=report_name)
+
+        response = self.client.get(data={'id': report.id})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['columns'], {
+            'Partner': True, 'Contact Name': True, 'Contact Type': True})
 
 
 class TestDownloadReport(MyReportsTestCase):
@@ -240,7 +255,7 @@ class TestDownloadReport(MyReportsTestCase):
 
     def setUp(self):
         super(TestDownloadReport, self).setUp()
-        self.client = TestClient(path='/reports/download')
+        self.client = TestClient(path=reverse('download_report'))
         self.client.login_user(self.user)
 
         ContactRecordFactory.create_batch(5, partner__owner=self.company)
@@ -256,8 +271,8 @@ class TestDownloadReport(MyReportsTestCase):
 
         # create a report whose results is for all contact records in the
         # company
-        response = self.client.post(
-            path='/reports/view/mypartners/contactrecord')
+        response = self.client.post(path=reverse('reports', kwargs={
+            'app': 'mypartners', 'model': 'contactrecord'}))
         report_name = response.content
         report = Report.objects.get(name=report_name)
 
@@ -265,3 +280,46 @@ class TestDownloadReport(MyReportsTestCase):
         response = self.client.get(data={'id': report.pk})
 
         self.assertEqual(response['Content-Type'], 'text/csv')
+
+
+class TestRegenerate(MyReportsTestCase):
+    """Tests the reports can be regenerated."""
+
+    def setUp(self):
+        super(TestRegenerate, self).setUp()
+        self.client = TestClient(path=reverse('reports', kwargs={
+            'app': 'mypartners', 'model': 'contactrecord'}))
+        self.client.login_user(self.user)
+
+        ContactRecordFactory.create_batch(10, partner__owner=self.company)
+
+    def test_regenerate(self):
+        # create a report whose results is for all contact records in the
+        # company
+        response = self.client.post(
+            path=reverse('reports', kwargs={
+                'app': 'mypartners', 'model': 'contactrecord'}),
+            data={'values': ['partner', 'contact__name', 'contact_type']})
+
+        report_name = response.content
+        report = Report.objects.get(name=report_name)
+        results = report.results
+
+        response = self.client.get(data={'id': report.id})
+        self.assertEqual(response.status_code, 200)
+
+        # remove report results and ensure we can still get a resonable
+        # response
+        report.results.delete()
+        report.save()
+        self.assertFalse(report.results)
+
+        response = self.client.get(data={'id': report.id})
+        self.assertEqual(response.status_code, 200)
+
+        # regenerate results and ensure they are the same as the original
+        response = self.client.get(path=reverse('regenerate'), data={
+            'id': report.pk})
+        report = Report.objects.get(name=report_name)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(report.results)

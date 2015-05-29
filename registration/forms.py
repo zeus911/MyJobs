@@ -171,7 +171,7 @@ class CustomPasswordResetForm(PasswordResetForm):
         body = loader.render_to_string(email_template_name, c)
         send_email(body, email_type=settings.FORGOTTEN_PASSWORD,
                    recipients=[email], headers=headers,
-                   domain=get_current_seosite('domain'))
+                   domain=get_current_seosite('domain', 'lower'))
 
 
 class RegistrationForm(forms.Form):

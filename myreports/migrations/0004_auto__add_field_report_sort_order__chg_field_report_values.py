@@ -10,7 +10,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Report.order_by'
         db.add_column(u'myreports_report', 'order_by',
-                      self.gf('django.db.models.fields.CharField')(max_length=50, null=True, blank=True),
+                      self.gf('django.db.models.fields.CharField')(max_length=50, blank=True),
                       keep_default=False)
 
 
@@ -23,7 +23,7 @@ class Migration(SchemaMigration):
 
 
         # Changing field 'Report.values'
-        db.alter_column(u'myreports_report', 'values', self.gf('django.db.models.fields.CharField')(max_length=500, null=True))
+        db.alter_column(u'myreports_report', 'values', self.gf('django.db.models.fields.CharField')(max_length=500))
 
     models = {
         u'auth.group': {

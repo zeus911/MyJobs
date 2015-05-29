@@ -492,8 +492,8 @@ h1 > small > a:hover {
 .partner-tag.female.button { box-shadow: 2px 2px 0 #2B9CBC; }
 .partner-tag.minority { background-color: #FAA732; }
 .partner-tag.minority.button { box-shadow: 2px 2px 0 #DE860A; }
-.partner-tag.disabled { background-color: #808A9A; }
-.partner-tag.disabled.button { box-shadow: 2px 2px 0 #5F6D83; }
+.partner-tag.disability { background-color: #808A9A; }
+.partner-tag.disability.button { box-shadow: 2px 2px 0 #5F6D83; }
 .partner-tag.disabled-veteran { background-color: #659274; }
 .partner-tag.disabled-veteran.button { box-shadow: 2px 2px 0 #467B58; }
 .partner-tag.disabled-tag { background-color: #BCBCC2; }
@@ -851,6 +851,10 @@ input.datepicker {
 }
 
 .sidebar a, .report a {
+    cursor: pointer;
+}
+
+tr.report {
     cursor: pointer;
 }
 
@@ -1385,6 +1389,21 @@ input[readonly].datepicker {
     margin: 0;
 }
 
+.help-text {
+    color: #666;
+    font-size: 0.9em;
+    font-style: italic;
+    line-height: 0.9em;
+    margin-bottom: 7px;
+    margin-left: 1px;
+    margin-top: -6px;
+    text-shadow: 0 1px 0 #FFF;
+}
+
+.show-errors {
+    color: #990000;
+}
+
 .panel > #choices input[type="checkbox"] {
     margin-top: -1px;
 }
@@ -1456,10 +1475,33 @@ div[id$="-wrapper"] + div[id$="-wrapper"] > .list-header {
     position: relative;
 }
 
-.rpt-container label {
+.big-blu {
     font-size: 16px;
     font-weight: 700;
     color: #5e6c82;
+}
+
+.list-body label {
+    margin-bottom: 0;
+}
+
+.list-body label:hover {
+    cursor: pointer;
+}
+
+.checklist label {
+    display: inline;
+    font-size: 14px;
+    font-weight: normal;
+    color: #333;
+}
+
+.checklist input {
+    margin: 5px;
+}
+
+.checklist input:first-of-type {
+  margin-left: 0;
 }
 
 .rpt-container span.datepicker {
@@ -1500,7 +1542,7 @@ div[id$="-wrapper"] + div[id$="-wrapper"] > .list-header {
     cursor: move;
 }
 
-.placeholder {
+.column-container .placeholder {
     background-color: #F0FDD2;
     margin-right: 5px;
     border-bottom: 1px solid #E5E5E5;
@@ -1562,6 +1604,25 @@ h3.bottom-bordered {
     list-style: none;
     margin: 0;
     padding: 0;
+}
+
+.choices-header {
+    border-bottom: 1px solid #000;
+    font-weight: 700;
+    margin-bottom: 2px;
+    margin-top: 5px;
+}
+
+.choices-header input[type="checkbox"] {
+    margin-top: -1px;
+}
+
+.choices-header + #choices {
+    margin-left: 15px;
+}
+
+#choices input[type="radio"] {
+    margin-top: -1px;
 }
 
 .rpt-buttons {
@@ -1636,9 +1697,9 @@ h3.bottom-bordered {
 
 .reporting-modal label {
     display: inline-block;
-    margin-right: 5px;
     font-weight: 700;
     font-size: 16px;
+    margin-right: 5px;
 }
 
 .chart-box-holder.legend {
@@ -2062,7 +2123,7 @@ table#row-link-table {
 
 .short-list {
     margin: 0;
-    max-height: 160px;
+    max-height: 100px;
     overflow-y: auto;
     padding-left: 35px;
     position: relative;

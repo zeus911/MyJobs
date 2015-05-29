@@ -56,8 +56,6 @@ urlpatterns += patterns(
 )
 
 
-from myjobs.views import Testimonials
-
 urlpatterns += patterns(
     '',
     url(r'^account/$',
@@ -69,7 +67,6 @@ urlpatterns += patterns(
     url(r'^savedsearch/$',
         RedirectView.as_view(url='https://secure.my.jobs/saved-search/view')),
     url(r'^accounts/', include('registration.urls')),
-    url(r'^about/testimonials/$', Testimonials.as_view(), name='testimonials'),
 )
 
 for page in ['about', 'privacy', 'contact', 'contact-faq', 'terms']:
