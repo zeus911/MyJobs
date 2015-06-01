@@ -13,6 +13,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.csrf import csrf_protect
 
+from postajob.models import SitePackage
 from seo.models import (ATSSourceCode, BillboardImage,
                         BusinessUnit, Company, Configuration, CustomFacet,
                         CustomPage, GoogleAnalytics,
@@ -595,6 +596,61 @@ class ConfigurationForm(RowPermissionsForm):
 class BusinessUnitForm(SeoSiteReverseForm):    
     class Meta:
         model = BusinessUnit
+
+    def __init__(self, *args, **kwargs):
+        super(BusinessUnitForm, self).__init__(*args, **kwargs)
+
+        sites = SeoSite.objects.all()
+        site_package_label = 'Show on these sites only'
+        site_packages_widget = FSM(site_package_label,
+                                   reverse_lazy('site_fsm'), async=True)
+        self.fields['site_packages'] = forms.ModelMultipleChoiceField(
+            queryset=sites, help_text='', label=site_package_label,
+            required=False, widget=site_packages_widget)
+
+        if self.instance.pk and self.instance.site_packages:
+            # Since we're not using actual site_packages for the site_packages,
+            # the initial data also needs to be manually set.
+            query = {'site_package__in': self.instance.site_packages.all()}
+            initial = [site.pk for site in SeoSite.objects.filter(**query)]
+            self.initial['site_packages'] = {site: 'selected'
+                                             for site in initial}
+
+        # Override the default help_text since for some reason
+        # ModelMultipleChoiceFields ignore the help_text kwarg.
+        self.fields['site_packages'].help_text = 'This is set on ' \
+                                                 'import and will take until ' \
+                                                 'the next import to show ' \
+                                                 'up or stop.'
+
+    def clean_site_packages(self):
+        """
+        Convert from SeoSite or network sites to a SitePackage.
+
+        """
+        sites = self.cleaned_data.get('site_packages')
+        site_packages = []
+        for site in sites:
+            if not hasattr(site, 'site_package') or not site.site_package:
+                # If a site doesn't already have a site_package specific
+                # to it create one.
+                package = SitePackage(name=site.domain)
+                package.make_unique_for_site(site)
+            site_packages.append(site.site_package)
+
+        return site_packages
+
+    def save(self, commit=True):
+        sites = self.cleaned_data['site_packages']
+        bu = super(BusinessUnitForm, self).save(commit)
+
+        # The pk must exist before the manytomany relationship can be created.
+        if not hasattr(bu, 'pk') or not bu.pk:
+            bu.save()
+
+        [bu.site_packages.add(s) for s in sites]
+
+        return bu
 
         
 class CompanyForm(SeoSiteReverseForm):    
