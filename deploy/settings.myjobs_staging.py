@@ -31,7 +31,7 @@ _PATH = os.path.abspath(os.path.dirname(__file__))
 
 # Absolute URL used for cross site links, relative during local/staging
 # absolute during production
-ABSOLUTE_URL = '/'
+ABSOLUTE_URL = 'http://staging.secure.my.jobs/'
 
 PROJECT = "myjobs"
 ENVIRONMENT = 'Staging'
