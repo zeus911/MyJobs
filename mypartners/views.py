@@ -766,7 +766,7 @@ def prm_edit_records(request):
         if form.is_valid():
             form.save(user, partner)
             return HttpResponseRedirect(reverse('record_view') + '?' +
-                                        request.GET.urlencode())
+                                        request.META['QUERY_STRING'])
     else:
         form = ContactRecordForm(partner=partner, instance=instance)
 
