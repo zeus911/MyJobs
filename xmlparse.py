@@ -18,6 +18,8 @@ from django.utils.html import linebreaks
 
 from seo.models import BusinessUnit
 from moc_coding.models import CustomCareer, Moc
+from universal.helpers import get_object_or_none
+
 
 text_fields = ['description', 'title', 'country', 'country_short', 'state',
                'state_short', 'city', 'company']
@@ -57,7 +59,7 @@ class JobFeed(object):
         self.parser = etree.XMLParser(recover=False, schema=schema)
         self.doc = etree.parse(self.filepath, self.parser)
         self.datetime_pattern = datetime_pattern
-        self.jsid=jsid
+        self.jsid = jsid
         self.node_tag = node_tag
         self.job_source_name = self.unescape(self.parse_doc(js_field))
         self.crawled_date = get_strptime(self.parse_doc(crawl_field),
@@ -65,12 +67,16 @@ class JobFeed(object):
         self.markdown = markdown
         self.company = company
         if jsid is None:
-            jsid=self.parse_doc('job_source_id')
+            jsid = self.parse_doc('job_source_id')
             if jsid:
-                self.jsid=int(jsid)
+                self.jsid = int(jsid)
         else:
             self.jsid = jsid
-        
+
+        self.bu = (get_object_or_none(BusinessUnit, pk=self.jsid)
+                   if self.jsid is not None else None)
+
+
     def jobparse(self):
         """
         """
@@ -413,7 +419,14 @@ class DEJobFeed(JobFeed):
 
         # Post-a-job specific fields
         job_dict['is_posted'] = False
-        job_dict['on_sites'] = [0]
+
+        # Determine what sites these jobs should be on
+        if self.bu:
+            on_sites = set(self.bu.site_packages.values_list('pk', flat=True))
+            on_sites = filter(None, on_sites)
+            job_dict['on_sites'] = on_sites or [0]
+        else:
+            job_dict['on_sites'] = [0]
 
         # Custom fields defined originally as part of Haystack and incorporated
         # into our application. Except 'id', which is the uniqueKey for our
