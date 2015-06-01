@@ -23,10 +23,11 @@ from taggit.managers import TaggableManager
 from moc_coding import models as moc_models
 from registration.models import Invitation
 from social_links import models as social_models
+from seo.route53 import can_send_email
 from seo.search_backend import DESearchQuerySet
 from myjobs.models import User
 from mypartners.models import Tag
-from universal.helpers import get_domain, get_object_or_none, has_mx_record
+from universal.helpers import get_domain, get_object_or_none
 
 
 import decimal
@@ -536,7 +537,7 @@ class SeoSite(Site):
                                   'that is associated with your company.')
 
         # Ensure that we have an MX record for the domain.
-        if not has_mx_record(self.email_domain):
+        if not can_send_email(self.email_domain):
             raise ValidationError('You do not currently have the ability '
                                   'to send emails from this domain.')
         return self.email_domain
@@ -562,7 +563,6 @@ class SeoSite(Site):
         buid_cache_keys = ['%s:buids' % key for key in site_cache_keys]
         social_cache_keys = ['%s:social_links' % site.domain for site in sites]
         cache.delete_many(site_cache_keys + buid_cache_keys + social_cache_keys)
-
 
     def email_domain_choices(self,):
         from postajob.models import CompanyProfile
