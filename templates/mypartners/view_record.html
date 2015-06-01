@@ -91,7 +91,7 @@
         </div>
         <div class="span3">
             <a class="btn one-hundred-percent-button-border-boxed" 
-               href="{% url 'partner_edit_record' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ record.id }}&page={{ page }}">Edit</a>
+               href="{% url 'partner_edit_record' %}?id={{ record.id }}&{{ request.GET.urlencode }}">Edit</a>
             <div class="tip-box" id="record-history">
             <h5>Record History</h5>
                 <div class="tip-content">

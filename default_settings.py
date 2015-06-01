@@ -526,62 +526,62 @@ SAVED_SEARCH_UPDATED = 16
 
 EMAIL_FORMATS = {
     ACTIVATION: {
-        'address': 'accounts@{domain}',
-        'subject': 'Account Activation for {domain}'
+        'address': u'accounts@{domain}',
+        'subject': u'Account Activation for {domain}'
     },
     CREATE_CONTACT_RECORD : {
         'address': PRM_EMAIL,
-        'subject': 'Partner Relationship Manager Contact Records'
+        'subject': u'Partner Relationship Manager Contact Records'
     },
     FORGOTTEN_PASSWORD: {
-        'address': 'accounts@{domain}',
+        'address': u'accounts@{domain}',
         # Subject is handled by the templates used in Django's default
         # password reset.
-        'subject': 'Password Reset on {domain}',
+        'subject': u'Password Reset on {domain}',
     },
     GENERIC: {
 
     },
     INACTIVITY: {
-        'address': 'accounts@{domain}',
-        'subject': 'Account Inactive',
+        'address': u'accounts@{domain}',
+        'subject': u'Account Inactive',
     },
     INVITATION: {
-        'address': 'accounts@{domain}',
-        'subject': '{company_name} invitation from {inviter}',
+        'address': u'accounts@{domain}',
+        'subject': u'{company_name} invitation from {inviter}',
     },
     INVOICE: {
-        'address': 'invoice@{domain}',
-        'subject': '{company_name} Invoice',
+        'address': u'invoice@{domain}',
+        'subject': u'{company_name} Invoice',
     },
     PARTNER_SAVED_SEARCH_RECIPIENT_OPTED_OUT: {
-        'address': '{company_name} Saved Search <savedsearch@{domain}>',
-        'subject': 'My.jobs Partner Saved Search Update',
+        'address': u'{company_name} Saved Search <savedsearch@{domain}>',
+        'subject': u'My.jobs Partner Saved Search Update',
     },
     POSTING_REQUEST_CREATED: {
-        'address': 'request@{domain}',
-        'subject': 'New request for {company_name}',
+        'address': u'request@{domain}',
+        'subject': u'New request for {company_name}',
     },
     SAVED_SEARCH: {
-        'address': '{company_name} Saved Search <savedsearch@{domain}>',
-        'subject': '{label}',
+        'address': u'{company_name} Saved Search <savedsearch@{domain}>',
+        'subject': u'{label}',
     },
     SAVED_SEARCH_DIGEST: {
-        'address': '{company_name} Saved Search <savedsearch@{domain}>',
-        'subject': 'Your Saved Search Digest',
+        'address': u'{company_name} Saved Search <savedsearch@{domain}>',
+        'subject': u'Your Saved Search Digest',
 
     },
     SAVED_SEARCH_DISABLED: {
-        'address': '{company_name} Saved Search <savedsearch@{domain}',
-        'subject': 'Invalid URL in Your {company_name} Saved Search',
+        'address': u'{company_name} Saved Search <savedsearch@{domain}',
+        'subject': u'Invalid URL in Your {company_name} Saved Search',
     },
     SAVED_SEARCH_INITIAL: {
-        'address': '{company_name} Saved Search <savedsearch@{domain}>',
-        'subject': '{company_name} New Saved Search - {label}',
+        'address': u'{company_name} Saved Search <savedsearch@{domain}>',
+        'subject': u'{company_name} New Saved Search - {label}',
     },
     SAVED_SEARCH_UPDATED: {
-        'address': '{company_name} Saved Search <savedsearch@{domain}>',
-        'subject': '{company_name} Saved Search Updated - {label}',
+        'address': u'{company_name} Saved Search <savedsearch@{domain}>',
+        'subject': u'{company_name} Saved Search Updated - {label}',
     },
 }
 
