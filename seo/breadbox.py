@@ -198,7 +198,7 @@ class Breadbox(object):
         self.build_title_breadcrumbs_from_slugs()
 
     def build_location_breadcrumbs_from_slugs(self):
-        ending_slug = settings.SLUG_TAGS['location_slug']
+        ending_slug = settings.SLUG_TAGS['location_slug'].strip('/')
 
         if self.filters.get('location_slug'):
             location_slug = self.filters['location_slug'].strip('/')
@@ -211,11 +211,17 @@ class Breadbox(object):
 
             # If there's only a country then we can safely remove the
             # ending slug as well.
-            if len(location_filters) < 2:
-                new_path = new_path.replace(ending_slug, '')
+            slugs = new_path.split('/')
+            if ending_slug in slugs and len(location_filters) < 2:
+                slugs.remove(ending_slug)
 
-            new_location_slug = "/".join(location_filters[1:])
-            new_path = new_path.replace(location_slug, new_location_slug)
+            if location_slug in new_path:
+                location_slugs = location_slug.split('/')
+                left = slugs.index(location_slugs[0])
+                right = left + len(location_slugs)
+
+                new_path = '/'.join(slugs[:left] + location_filters[1:] + 
+                                    slugs[right:])
 
             kwargs = {
                 # This class name is different because of the way we used to

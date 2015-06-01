@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from cStringIO import StringIO
 import csv
+from datetime import datetime
 import HTMLParser
 import json
 
@@ -31,6 +32,10 @@ def humanize(records):
     parser = HTMLParser.HTMLParser()
 
     for record in records:
+        for key, value in record.items():
+            if value is None:
+                record[key] = ''
+
         # make tag lists look pretty
         if 'tags' in record:
             record['tags'] = ', '.join(record['tags'])
@@ -50,9 +55,6 @@ def humanize(records):
             record['notes'] = '\n'.join(
                 filter(bool, record['notes'].split('\n\n')))
 
-        for key, value in record.items():
-            if value is None:
-                record[key] = ''
 
     return records
 
@@ -104,9 +106,23 @@ def serialize(fmt, data, values=None, order_by=None):
 
     """
 
+    # helper function to deal with different value types in a dict
+    def convert(record, value):
+        val = record[value]
+        # strip html from strings
+        if isinstance(val, basestring) and val:
+            val = html.fromstring(val).text_content()
+        # convert datetime to pretty string
+        if isinstance(val, datetime):
+            val = val.strftime("%b %d, %Y %I:%M%p")
+
+        return val
+
     if isinstance(data, query.ValuesQuerySet):
         data = list(data)
     elif isinstance(data, query.QuerySet):
+        if values:
+            values = [value.split('__')[0] for value in values]
         data = [dict({'pk': record['pk']}, **record['fields'])
                 for record in serializers.serialize(
                     'python', data, use_natural_keys=True, fields=values)]
@@ -117,14 +133,10 @@ def serialize(fmt, data, values=None, order_by=None):
         _, reverse, order_by = sorted(order_by.partition('-'))
 
         # Convert data to a list of `OrderedDict`s,
-        data = sorted([OrderedDict([(
-            # strip HTML from invidual values...
-            value, html.fromstring(record[value]).text_content()
-            # if they aren't empty strings.
-            if isinstance(record[value], basestring) and record[value].strip()
-            else record[value]) for value in values]) for record in data],
-                # and sort them by specified value (first column by default)
-                key=lambda record: record[order_by], reverse=bool(reverse))
+        data = sorted(
+            [OrderedDict([(value, convert(record, value)) for value in values])
+             for record in data], key=lambda record: record[order_by],
+            reverse=bool(reverse))
 
     if fmt == 'json':
         return json.dumps(data, cls=DjangoJSONEncoder)

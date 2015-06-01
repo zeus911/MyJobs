@@ -43,11 +43,11 @@ $(function() {
         show_fields();
     });
 
-    $("#id_contact_name").on("change", function() {
-        if($('[id$="id_contact_name"]').val() != 'None'){
-        var form = $('#contact-record-form');
+    $("#id_contact").on("change", function() {
+        if($('[id$="id_contact"]').val()) {
+            var form = $('#contact-record-form'),
+                data = form.serialize();
 
-        var data = form.serialize();
             $.ajax({
                 data: data,
                 type: 'POST',

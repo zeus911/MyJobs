@@ -41,18 +41,11 @@ CACHES = {
 HAYSTACK_CONNECTIONS = {
     'default': {
         'ENGINE': 'seo.search_backend.DESolrEngine',
-        'URL': 'http://ec2-54-242-14-151.compute-1.amazonaws.com:8983/solr',
+        'URL': 'http://ec2-54-225-127-98.compute-1.amazonaws.com:8983/solr',
         'TIMEOUT': 300,
         'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
         'HTTP_AUTH_PASSWORD': SOLR_AUTH['password']
     },
-    'groups': {
-        'ENGINE': 'saved_search.groupsearch.SolrGrpEngine',
-        'URL': 'http://ec2-54-242-14-151.compute-1.amazonaws.com:8983/solr',
-        'TIMEOUT': 300,
-        'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
-        'HTTP_AUTH_PASSWORD': SOLR_AUTH['password']
-    }
 }
 
 ROOT_URLCONF = 'dseo_urls'
