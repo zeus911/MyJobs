@@ -279,7 +279,9 @@ def downloads(request):
         report_id = request.GET.get('id', 0)
         report = get_object_or_404(
             get_model('myreports', 'report'), pk=report_id)
-        report.regenerate()
+
+        if not report.results:
+            report.regenerate()
 
         fields = sorted([field for field in report.python[0].keys()
                          if field != 'pk'])

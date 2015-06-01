@@ -65,10 +65,12 @@ class Report(models.Model):
 
     def regenerate(self):
         """Regenerate the report file if it doesn't already exist on disk."""
-        if not self.results:
-            values = json.loads(self.values)
-            contents = serialize('json', self.queryset, values=values)
-            results = ContentFile(contents)
+        values = json.loads(self.values)
+        contents = serialize('json', self.queryset, values=values)
+        results = ContentFile(contents)
 
-            self.results.save('%s-%s.json' % (self.name, self.pk), results)
-            self._results = contents
+        if self.results:
+            self.results.delete()
+
+        self.results.save('%s-%s.json' % (self.name, self.pk), results)
+        self._results = contents
