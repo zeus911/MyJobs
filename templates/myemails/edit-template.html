@@ -1,14 +1,123 @@
 {% extends "base.html" %}
 
+{% block meta-extra %}
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+<style>
+    .menu-btn:hover {
+        cursor: pointer;
+    }
+    .menu-ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .menu-ul li {
+        color: #FFF;
+        padding: 3px 0;
+        border-bottom: 1px solid #b8f1f5;
+    }
+    .menu-ul li:hover {
+        background-color: #5a6d81;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 {% include "myemails/includes/header.html" with title="Company Name? Edit Template" %}
 
 <div class="row">
     <div class="span12">
-        <div>Header Placeholder</div>
-        <div>WYSIWYG Placeholder</div>
-        <div>Footer Placeholder</div>
-        <div>Variables</div>
+        <span>Event Name: <span style="font-weight: 700; font-size: 1.1em;">Event1</span></span>
+        <br/>
+        <label style="display: inline-block">Template Name:</label>
+        <input type="text" value="Template 1" />
     </div>
 </div>
+
+<div class="row">
+    <div class="span12">
+        <div style="width: 140px; height: 600px; float: right; border: 1px solid #E5E5E5; border-left: 0;">
+            <div style="padding: 3px; text-align: center; background-color: #DDD; border-bottom: 1px solid #E5E5E5;">Variables</div>
+            <ul style="list-style: none; padding: 0 0 0 5px; margin: 0;">
+                <li>Item1</li>
+                <li>Item2</li>
+                <li>Item3</li>
+                <li>Item4</li>
+                <li>Item5</li>
+            </ul>
+        </div>
+        <div id="header-placeholder" style="width: 800px; height: 150px; border: 1px solid #E5E5E5; position: relative;">
+            <!--
+            Could experiment with iframe and have two divs positioned absolutely over the iframe
+            so this current implementation is little backwards.
+            -->
+            <div class="hover" style="position: absolute; opacity: 0.15; top: 2px; left: 5px; z-index: 100;">
+                <span style="font-weight: 700; color: #FFF;">PREVIEW</span>
+            </div>
+            <div class="hover" style="position: absolute; opacity: 0.15; top: 0; right: 0; z-index: 100;">
+                <div class="menu-btn" data-section="Header" style="background-color: #3a3a3a; padding: 3px 8px;">
+                    <i class="fa fa-bars" style="color: #fff; font-size: 2em;"></i>
+                </div>
+            </div>
+            <div class="header-preview" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #5a6d81">
+                <div style="font-weight: 700; font-size: 2.1em; margin-top: 3px;">CompanyXYZ</div>
+                <div>company header test</div>
+            </div>
+        </div>
+        <div style="width: 800px; height: 300px; border-left: 1px solid #E5E5E5; border-right: 1px solid #E5E5E5;">
+            <div style="width: 798px; height: 30px;">
+                <img src="http://i.imgur.com/zWqfdln.png" />
+            </div>
+            <textarea style="width: 784px; height: 260px;"></textarea>
+        </div>
+        <div id="footer-placeholder" style="width: 800px; height: 150px; border: 1px solid #E5E5E5; position: relative">
+            <div class="hover" style="position: absolute; opacity: 0.15; top: 2px; left: 5px; z-index: 100;">
+                <span style="font-weight: 700; color: #FFF;">PREVIEW</span>
+            </div>
+            <div class="hover" style="position: absolute; opacity: 0.15; top: 0; right: 0; z-index: 100;">
+                <div class="menu-btn" data-section="Footer" style="background-color: #3a3a3a; padding: 3px 8px;">
+                    <i class="fa fa-bars" style="color: #fff; font-size: 2em;"></i>
+                </div>
+            </div>
+            <div class="header-preview" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #5a6d81">
+                Company Footer
+                <a>Links</a><a>for</a><a>the</a><a>footer</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="offset7 span4" style="margin-top: 5px;">
+        <div style="margin-left: 30px;">
+            <a class="btn"><i class="fa fa-eye"></i> Preview</a>
+            <a class="btn primary"><i class="fa fa-floppy-o"></i> Save</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra-js %}
+<script>
+    $("#header-placeholder, #footer-placeholder").on("mouseenter", function() {
+       $(this).find(".hover").fadeTo(300, 1);
+    });
+    $("#header-placeholder, #footer-placeholder").on("mouseleave", function() {
+        $(this).find(".hover").fadeTo(300, 0.15);
+    });
+
+    $(".menu-btn").on("mouseenter", function() {
+        var $this = $(this),
+            $menu = $('<div style="display: none; background-color: #3a3a3a; width: 125px; height:144px;">' +
+                      '<ul class="menu-ul" style="list-style: none; padding: 0; margin: 0;"><li>Edit</li><li>Change ' + $this.data("section") + '</li></ul>' +
+                      '</div>');
+        $this.html("");
+        $menu.appendTo($this).show("slide", {direction: "right"}, 500);
+    });
+
+    $(".menu-btn").on("mouseleave", function() {
+        var $this = $(this);
+        $this.html("").append('<i class="fa fa-bars" style="color: #fff; font-size: 2em;"></i>');
+    })
+</script>
 {% endblock %}

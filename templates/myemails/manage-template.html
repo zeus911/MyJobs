@@ -2,6 +2,11 @@
 
 {% block meta-extra %}
 <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+<style>
+.awrap:hover {
+    text-decoration: none;
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -23,15 +28,15 @@
                 <div class="span12">
                     <h3 id="{{test.lower}}" style="margin-bottom: 0;">{{test}}</h3>
                     <p style="padding: 0;">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Accusamus ad assumenda atque consequatur delectus dicta ipsum iste laudantium maxime nesciunt qui rerum sunt, tenetur voluptas voluptates. Blanditiis delectus iure quasi.</p>
-                    <a href="{% url 'edit-template' %}">
-                    <div class="product-card" style="padding: 5px 10px; font-size: 1.3em;">
-                        <i class="fa fa-plus-circle" style="color: #009900;"></i> <span style="color: #000;">Create New Template</span>
-                    </div>
+                    <a class="awrap" href="{% url 'edit-template' %}">
+                        <div class="product-card" style="padding: 10px; font-size: 1.3em;">
+                            <i class="fa fa-plus-circle" style="color: #009900;"></i> <span style="color: #000;">Create New Template</span>
+                        </div>
                     </a>
                     {% for eh in "start" %}
-                        <div style="padding: 5px 10px; position: relative; background-color: {% if forloop.counter|divisibleby:2 %}#F7F7F7{%elif forloop.first%}#D5FACF{%else%}#FEFEFE{% endif %};">
+                        <div style="padding: 5px 10px; position: relative; background-color: {% if forloop.counter|divisibleby:2 %}#F7F7F7{%else%}#FEFEFE{% endif %};">
 
-                            <span style="font-size: 1.3em;">Template Name {{forloop.counter}}</span>
+                            <span style="font-size: 1.3em; padding: 8px 0; display: inline-block;">Template Name {{forloop.counter}}</span>
                             {% if forloop.first %}<div class="label label-success">Active</div>{% endif %}
                             <div style="float: right;">
                                 <a class="btn" href="{% url 'edit-template' %}"><i class="fa fa-pencil fa-lg"></i> Edit</a>
@@ -45,24 +50,9 @@
                 </div>
             </div>
             {% if not forloop.first %}
-            <div class="pull-right back-top-top" style="font-size: 1.1em; color: #5a6d81; cursor: pointer; padding-right: 10px;"><i class="fa fa-arrow-circle-up"></i> Back to top</div>
+            <div class="pull-right back-to-top" style="font-size: 1.1em; color: #5a6d81; cursor: pointer; padding-right: 10px; margin-top: 2px;"><i class="fa fa-arrow-circle-up"></i> Back to top</div>
             <div class="clearfix"></div>
             {% endif %}
-        {% endfor %}
-        {% for test in mmm %}
-        <div style="padding: 5px 10px; {% if forloop.first %}margin-top: 20px;{%endif%} background-color: {% if forloop.counter|divisibleby:2 %}#F7F7F7{%else%}#FEFEFE{%endif%};">
-            <span style="font-size: 1.3em; font-weight: 700;">{{test}}</span>
-            <div class="pull-right">
-                <select>
-                    {% for eh in "ending" %}
-                    <option value="templatename{{forloop.counter}}">Template Name {{forloop.counter}}</option>
-                    {% endfor %}
-                </select>
-                <a class="btn" href="{% url 'edit-template' %}"><i class="fa fa-pencil fa-lg"></i> Edit</a>
-                <a class="btn" href="{% url 'view-template' %}"><i class="fa fa-eye fa-lg"></i> View</a>
-            </div>
-            <div class="clearfix"></div>
-        </div>
         {% endfor %}
     </div>
 </div>

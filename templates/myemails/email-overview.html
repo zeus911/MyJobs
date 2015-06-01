@@ -21,14 +21,14 @@
                 <h4>Active Events</h4>
                 {% for i in "test" %}
                 <div class="product-card no-highlight">
-                    <div>Event Name</div>
+                    <div style="font-weight: 700;">Event Name</div>
                     <div>
                         Template:
                         <span>Template Name 1</span>
                         <i class="fa fa-pencil edit-template-name" style="cursor: pointer;"></i>
                     </div>
                     <div>Last Sent: 4 May 2015 15:23</div>
-                    <a class="btn" href="{% url 'edit-template' %}"><i class="fa fa-pencil fa-lg"></i> Edit</a>
+                    <a class="btn" href="{% url 'edit-template' %}" style="right: 95px;"><i class="fa fa-pencil fa-lg"></i> Edit Template</a>
                     <a class="btn" href="{% url 'view-template' %}"><i class="fa fa-eye fa-lg"></i> View</a>
                 </div>
                 {% endfor %}
@@ -45,7 +45,7 @@
                          <i class="fa fa-pencil edit-template-name" style="cursor: pointer;"></i>
                     </div>
                     <div>Last Sent: 4 May 2015 15:23</div>
-                    <a class="btn" href="{% url 'edit-template' %}" style="right: 95px;"><i class="fa fa-pencil fa-lg"></i> Edit</a>
+                    <a class="btn" href="{% url 'edit-template' %}" style="right: 95px;"><i class="fa fa-pencil fa-lg"></i> Edit Template</a>
                     <a class="btn" href="{% url 'view-template' %}"><i class="fa fa-eye fa-lg"></i> View</a>
                 </div>
                 {% endfor %}
@@ -64,6 +64,7 @@
 {% endblock %}
 
 {% block extra-js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.js"></script>
 <script>
     $("body").on("click", ".edit-template-name", function() {
         var $element = $(this).prev("span"),
@@ -79,10 +80,11 @@
 
           $parent.html(strName);
           $parent.after(' <i class="fa fa-pencil edit-template-name" style="cursor: pointer;"></i>');
-//          $(".notice").append('<div class="alert alert-success">' +
-//                              '<button type="button" class="close" data-dismiss="alert">x</button>' +
-//                              'A template name for <b>an Event</b> has been updated.' +
-//                              '</div>');
+            $(".notice").html("")
+                        .append('<div class="alert alert-success">' +
+                                '<button type="button" class="close" data-dismiss="alert">x</button>' +
+                                'A template name for <b>an Event</b> has been updated.' +
+                                '</div>');
         });
 
         $(this).remove();
