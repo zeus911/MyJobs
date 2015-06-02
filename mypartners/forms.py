@@ -183,7 +183,7 @@ class NewPartnerForm(NormalizedModelForm):
         form_name = "Partner Information"
         model = Contact
         exclude = ['user', 'partner', 'tags', 'locations', 'library',
-                   'approval_status']
+                   'approval_status', 'archived_on']
         widgets = generate_custom_widgets(model)
         widgets['notes'] = forms.Textarea(
             attrs={'rows': 5, 'cols': 24,
