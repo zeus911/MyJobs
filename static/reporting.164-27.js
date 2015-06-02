@@ -794,13 +794,17 @@ FilteredList.prototype.filter = function() {
       filterData = {},
       $recordCount,
       $listBody,
-      $input;
+      $input,
+      Status = { UNPROCESSED: 0, APPROVED: 1, DENIED: 2 };
 
   filteredList.report.fields.forEach(function(field) {
     if (filteredList.ignore.indexOf(field.id) === -1) {
       $.extend(filterData, field.onSave());
     }
   });
+
+  // only show approved records
+  filterData.approval_status__code=Status.APPROVED;
 
   if (this.id === "partner") {
     // annotate how many records a partner has.

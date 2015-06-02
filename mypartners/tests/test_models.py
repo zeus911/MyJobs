@@ -10,7 +10,7 @@ from mydashboard.tests.factories import CompanyFactory
 from mypartners.tests.factories import (ContactFactory, ContactRecordFactory,
                                         LocationFactory, PartnerFactory,
                                         TagFactory)
-from mypartners.models import Contact, Location, Partner, PRMAttachment
+from mypartners.models import Contact, Location, Partner, PRMAttachment, Status
 from mysearches.models import PartnerSavedSearch
 from mysearches.tests.factories import PartnerSavedSearchFactory
 
@@ -165,3 +165,14 @@ class MyPartnerTests(MyJobsBase):
         self.contact.delete()
         self.assertEqual(len(Contact.objects.all()), 1)
         self.assertTrue(self.contact.archived_on)
+
+    def test_models_approved(self):
+        """
+        By default, new partners, contacts, and contactrecords should be
+        approved.
+        """
+
+        contactrecord = ContactRecordFactory(partner=self.partner)
+
+        for instance in (self.contact, self.partner, contactrecord):
+            self.assertEqual(instance.approval_status.code, Status.APPROVED)
