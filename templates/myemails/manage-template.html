@@ -41,7 +41,7 @@
                             <div style="float: right;">
                                 <a class="btn" href="{% url 'edit-template' %}"><i class="fa fa-pencil fa-lg"></i> Edit</a>
                                 <a class="btn" href="{% url 'view-template' %}"><i class="fa fa-eye fa-lg"></i> View</a>
-                                <a class="btn btn-danger {% if forloop.first %}disabled{%endif%}" style="color: #FFF;"><i class="fa fa-trash-o"></i> Delete</a>
+                                <a class="btn btn-danger {% if forloop.first %}disabled{%endif%}" style="color: #FFF;" {%if forloop.first%}title="Cannot delete active templates"{%endif%}><i class="fa fa-trash-o"></i> Delete</a>
                             </div>
                             <div class="clearfix"></div>
                         </div>
