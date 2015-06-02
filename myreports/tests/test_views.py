@@ -303,12 +303,11 @@ class TestRegenerate(MyReportsTestCase):
 
         report_name = response.content
         report = Report.objects.get(name=report_name)
-        results = report.results
 
         response = self.client.get(data={'id': report.id})
         self.assertEqual(response.status_code, 200)
 
-        # remove report results and ensure we can still get a resonable
+        # remove report results and ensure we can still get a reasonable
         # response
         report.results.delete()
         report.save()
@@ -323,3 +322,12 @@ class TestRegenerate(MyReportsTestCase):
         report = Report.objects.get(name=report_name)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(report.results)
+
+        # regenerate report without deleting the report prior
+        # see if it overwrites other report.
+        results = report.results
+        response = self.client.get(path=reverse('regenerate'), data={
+            'id': report.pk})
+        report = Report.objects.get(name=report_name)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(results.name, report.results.name)

@@ -158,7 +158,7 @@ Report.prototype.createCloneReport = function(json) {
         date = this.findField("date");
         $.extend(date.defaultVal, phony);
       } else {
-        this.findField(key === "name" ? "contact" : key).defaultVal = value;
+        this.findField(key === "contact__name" ? "contact" : key).defaultVal = value;
       }
     }
   }
