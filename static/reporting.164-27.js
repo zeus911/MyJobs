@@ -158,7 +158,7 @@ Report.prototype.createCloneReport = function(json) {
         date = this.findField("date");
         $.extend(date.defaultVal, phony);
       } else {
-        this.findField(key === "contact__name" ? "contact" : key).defaultVal = value;
+        this.findField(key === "name" ? "contact" : key).defaultVal = value;
       }
     }
   }
@@ -1141,7 +1141,7 @@ $(document).ready(function() {
     renderNavigation();
   });
 
-  subpage.on("click", ".fa-download:not(.disabled), .export-report:not(.disabled)", function() {
+  subpage.on("click", ".fa-download, .export-report", function() {
     var report_id = $(this).parents("tr, .report").data("report");
 
     if (modernBrowser) {
@@ -1183,12 +1183,11 @@ $(document).ready(function() {
         $icon.addClass("fa-spin");
       },
       success: function() {
-        $icon.removeClass("fa-spin");
+        $icon.removeClass("fa-refresh fa-spin").addClass("fa-download");
 
         if (archive) {
-          $div.parents('tr').find('.export-report').removeClass('disabled');
-        } else {
-          $icon.next().removeClass('disabled');
+          $div.removeClass("regenerate-report").addClass("export-report");
+          $div.html($icon.prop("outerHTML") + " Export Report");
         }
       }
     });

@@ -80,7 +80,7 @@ def get_states(request):
 
 
 @company_has_access('prm_access')
-def view_records(request, app="myparters", model="contactrecord"):
+def view_records(request, app="mypartners", model="contactrecord"):
     """
     Returns records as JSON.
 
