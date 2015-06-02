@@ -36,8 +36,7 @@ if connection.vendor == 'sqlite':
 
     LINK_CONTACTS = """
     UPDATE mypartners_contactrecord
-    SET contact_phone = '', location = '', subject = '', job_id = '',
-        job_applications = '', job_interviews = '', job_hires = '',
+    SET 
         contact_id = (
         SELECT id
         FROM mypartners_contact
